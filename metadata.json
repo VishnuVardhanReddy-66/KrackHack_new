@@ -1,0 +1,7 @@
+{
+  "name": "AEGIS Protocol",
+  "description": "A unified campus digital ecosystem for students, faculty, and administrators to manage academics, grievances, opportunities, and collaboration.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
