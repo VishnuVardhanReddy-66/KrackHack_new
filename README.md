@@ -35,7 +35,4 @@ To eliminate the friction of campus life by bridging the gap between fragmented 
 * **Styling:** Tailwind CSS & Framer Motion (for smooth animations)
 * **AI Integration:** Gemini 1.5 Flash (via Google AI Studio)
 
----
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/your-username/aegis-protocol.git](https://github.com/your-username/aegis-protocol.git)
+
