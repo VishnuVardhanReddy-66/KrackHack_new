@@ -286,7 +286,8 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateToHub }) => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
-  const [logoUrl, setLogoUrl] = useState("https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Indian_Institute_of_Technology_Mandi_Logo.svg/1200px-Indian_Institute_of_Technology_Mandi_Logo.svg.png");
+  // Using official institutional logo as primary source
+  const [logoUrl, setLogoUrl] = useState("https://www.iitmandi.ac.in/main/images/IIT_Mandi_logo.png");
   const [sliderImages, setSliderImages] = useState(DEFAULT_CAMPUS_IMAGES);
 
   const nextImage = () => {
@@ -298,7 +299,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
   };
 
   const handleLogoError = () => {
-    const fallback = "https://www.iitmandi.ac.in/main/images/IIT_Mandi_logo.png";
+    // Fallback to a stable Wikimedia Commons link if official site image fails to load
+    const fallback = "https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Indian_Institute_of_Technology_Mandi_Logo.svg/1200px-Indian_Institute_of_Technology_Mandi_Logo.svg.png";
     if (logoUrl !== fallback) {
       setLogoUrl(fallback);
     }

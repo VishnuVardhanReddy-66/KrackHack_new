@@ -1,38 +1,20 @@
-# 🛡️ The AEGIS Protocol
-**A Unified Campus Digital Ecosystem**
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-Campus digital services are fragmented, creating inefficiency and a poor user experience. **The AEGIS Protocol** centralizes academic, administrative, and student services into a single, role-driven platform for Students, Faculty, and Admin.
+# Run and deploy your AI Studio app
 
----
+This contains everything you need to run your app locally.
 
-## 🚀 Vision
-To eliminate the friction of campus life by bridging the gap between fragmented platforms. AEGIS provides a seamless interface for everything from academic resources to community logistics.
+View your app in AI Studio: https://ai.studio/apps/drive/1HD8NGLCf9oubre1HojGIqZQc1ZgJ248c
 
-## ✨ Key Features
+## Run Locally
 
-### 🏛️ General & Administrative
-* **Role-Driven Dashboard:** Tailored interfaces for Students, Faculty, and Administrators.
-* **Grievance Management:** A transparent system for filing complaints with real-time **Status Tracking**.
-* **Announcements:** A centralized feed for official campus updates.
-
-### 📚 Academic Vault & Coursework
-* **Academic Vault:** A centralized repository for sharing and accessing study resources.
-* **Course Tracking:** Tools to manage and monitor academic progress across the semester.
-* **Exam Portal:** Integrated tracking for exam schedules and results.
-
-### 💼 Career & Growth
-* **Internship & Research Portal:** A dedicated hub for finding and applying for research opportunities and internships.
-
-### 🤝 Campus Life & Community
-* **Cab Pools:** A peer-to-peer system to coordinate travel and reduce costs.
-* **Threads:** A community forum for student discussions and peer support.
-* **Interactive Maps:** A centralized map service to navigate campus facilities.
-
----
-
-## 🛠️ Tech Stack
-* **Frontend:** React / Next.js (Vibe-coded with focus on UI/UX)
-* **Styling:** Tailwind CSS & Framer Motion (for smooth animations)
-* **AI Integration:** Gemini 1.5 Flash (via Google AI Studio)
+**Prerequisites:**  Node.js
 
 
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

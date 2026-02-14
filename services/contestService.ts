@@ -58,27 +58,40 @@ const getFallbackContests = (): any[] => {
 
 export const contestService = {
   /**
-   * Fetches all contests from the Kontests API using a more reliable CORS proxy.
-   * Data is normalized and sorted by start_time.
+   * Fetches all contests from the Kontests API using a reliable CORS proxy and timeout.
    */
   async fetchContests(): Promise<{ data: Contest[], isFallback: boolean }> {
     let rawData: any[] = [];
     let isFallback = false;
     
+    // Create an AbortController to handle request timeouts (408 prevention)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 second timeout
+
     try {
-      // Switching to allorigins as it's often more reliable than corsproxy.io for 404/500 scenarios
       const targetUrl = 'https://kontests.net/api/v1/all';
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+      // Switching to corsproxy.io as it handles high-latency endpoints better
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
       
       const response = await fetch(proxyUrl, {
         method: 'GET',
+        signal: controller.signal,
         headers: { 'Accept': 'application/json' }
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
       rawData = await response.json();
-    } catch (error) {
-      console.warn("External Contest API unreachable. Activating fallback data node.", error);
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      const isTimeout = error.name === 'AbortError';
+      console.warn(
+        isTimeout 
+          ? "Contest API took too long to respond (408). Switching to local cache." 
+          : "External Contest API unreachable. Activating fallback data node.", 
+        error
+      );
       rawData = getFallbackContests();
       isFallback = true;
     }
