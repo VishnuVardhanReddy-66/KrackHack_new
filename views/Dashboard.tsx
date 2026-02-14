@@ -1,163 +1,548 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { UserRole } from '../types';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
 
-interface MetricCardProps {
-  label: string;
-  value: string | number;
-  icon: string;
-  trend?: string;
-}
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { duration: 0.8, ease: [0.28, 0.11, 0.32, 1] as any }
+  }
+};
 
-const MetricCard: React.FC<MetricCardProps> = ({ label, value, icon, trend }) => (
-  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-    <div className="flex justify-between items-start">
-      <div>
-        <p className="text-sm font-medium text-slate-500 mb-1">{label}</p>
-        <h4 className="text-3xl font-bold text-slate-800">{value}</h4>
-        {trend && <p className="text-xs text-emerald-600 mt-2 font-medium">↑ {trend} from last month</p>}
-      </div>
-      <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-2xl">
-        {icon}
-      </div>
+const FeatureCard: React.FC<{ icon: string, title: string, desc: string }> = ({ icon, title, desc }) => (
+  <motion.div 
+    whileHover={{ y: -5, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}
+    className="bento-card p-10 flex flex-col gap-6"
+  >
+    <div className="text-4xl">{icon}</div>
+    <div className="space-y-2">
+      <h4 className="text-lg font-extrabold text-[#242424] tracking-tight">{title}</h4>
+      <p className="text-sm text-[#616161] leading-relaxed font-medium">{desc}</p>
     </div>
-  </div>
+  </motion.div>
 );
 
-export const Dashboard: React.FC<{ role: UserRole }> = ({ role }) => {
-  const renderStudentDashboard = () => (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard label="Current GPA" value="3.85" icon="🎓" trend="0.2" />
-        <MetricCard label="Mess Balance" value="₹4,200" icon="🍱" />
-        <MetricCard label="Attendance" value="92%" icon="📈" />
-        <MetricCard label="Next Class" value="10:30 AM" icon="⏰" />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h4 className="text-lg font-bold text-slate-800 mb-4">Academic Tracker</h4>
-          <div className="space-y-4">
-            {[
-              { name: 'Data Structures (CS201)', progress: 75 },
-              { name: 'Microprocessors (EE301)', progress: 40 },
-              { name: 'Environmental Science', progress: 90 },
-            ].map(course => (
-              <div key={course.name}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium text-slate-700">{course.name}</span>
-                  <span className="text-slate-500 font-mono font-bold">{course.progress}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-blue-600 h-full transition-all duration-500" style={{ width: `${course.progress}%` }} />
-                </div>
-              </div>
+// Academic Events Data (Extracted from 2026 Calendar PDF)
+const ACADEMIC_EVENTS = [
+  // Even Semester 2026
+  { date: '2026-01-05', title: 'Classes Begin', type: 'academic' },
+  { date: '2026-01-26', title: 'Republic Day', type: 'holiday' },
+  { date: '2026-03-01', endDate: '2026-03-08', title: 'Mid Break', type: 'break' },
+  { date: '2026-03-12', title: 'Last Date: Midsem Sheets', type: 'academic' },
+  { date: '2026-03-21', title: 'Id-ul-Fitr', type: 'holiday' },
+  { date: '2026-03-26', title: 'Ram Navami', type: 'holiday' },
+  { date: '2026-03-31', title: 'Mahavir Jayanti', type: 'holiday' },
+  { date: '2026-04-03', title: 'Good Friday', type: 'holiday' },
+  { date: '2026-04-03', endDate: '2026-04-05', title: 'Exodia Fest', type: 'fest' },
+  { date: '2026-04-29', title: 'Last Day of Teaching', type: 'academic' },
+  { date: '2026-05-11', title: 'Vacation Begins', type: 'break' },
+  // Summer Term
+  { date: '2026-06-01', title: 'Summer Classes Start', type: 'academic' },
+  // Odd Semester 2026
+  { date: '2026-08-03', title: 'Odd Sem Classes Start', type: 'academic' },
+  { date: '2026-08-15', title: 'Independence Day', type: 'holiday' },
+  { date: '2026-09-14', title: 'Mid sem TCF', type: 'academic' },
+  { date: '2026-10-20', title: 'Dussehra', type: 'holiday' },
+  { date: '2026-10-24', endDate: '2026-11-01', title: 'Mid Break', type: 'break' },
+  { date: '2026-11-08', title: 'Diwali', type: 'holiday' },
+  { date: '2026-11-26', title: 'Last Day of Teaching', type: 'academic' },
+  { date: '2026-12-07', title: 'Vacation Begins', type: 'break' },
+  { date: '2026-12-26', title: 'Christmas', type: 'holiday' },
+];
+
+const CampusCalendar: React.FC = () => {
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+  // Defaulting to March 2026 as shown in the middle of the provided calendar
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 2, 1));
+
+  const nextDate = () => {
+    const d = new Date(currentDate);
+    if (view === 'month') d.setMonth(d.getMonth() + 1);
+    else if (view === 'week') d.setDate(d.getDate() + 7);
+    else d.setDate(d.getDate() + 1);
+    setCurrentDate(d);
+  };
+
+  const prevDate = () => {
+    const d = new Date(currentDate);
+    if (view === 'month') d.setMonth(d.getMonth() - 1);
+    else if (view === 'week') d.setDate(d.getDate() - 7);
+    else d.setDate(d.getDate() - 1);
+    setCurrentDate(d);
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return { firstDay, daysInMonth };
+  };
+
+  const { firstDay, daysInMonth } = getDaysInMonth(currentDate);
+  const calendarDays = Array.from({ length: 42 }, (_, i) => {
+    const day = i - firstDay + 1;
+    if (day > 0 && day <= daysInMonth) return day;
+    return null;
+  });
+
+  const getEventsForDay = (day: number) => {
+    const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    return ACADEMIC_EVENTS.filter(e => {
+      const start = new Date(e.date);
+      if (e.endDate) {
+        const end = new Date(e.endDate);
+        return checkDate >= start && checkDate <= end;
+      }
+      return start.toDateString() === checkDate.toDateString();
+    });
+  };
+
+  const getEventStyle = (type: string) => {
+    switch (type) {
+      case 'holiday': return 'bg-red-50 border-red-200 text-red-600';
+      case 'break': return 'bg-amber-50 border-amber-200 text-amber-600';
+      case 'academic': return 'bg-blue-50 border-blue-200 text-blue-600';
+      case 'fest': return 'bg-purple-50 border-purple-200 text-purple-600';
+      default: return 'bg-slate-50 border-slate-200 text-slate-600';
+    }
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden mt-12">
+      <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col">
+          <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase">Academic Calendar 2026</h3>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+            {(['month', 'week', 'day'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  view === v ? 'bg-[#5b5fc7] text-white' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {v}
+              </button>
             ))}
           </div>
-        </div>
-        <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-xl">
-          <div className="relative z-10">
-            <h4 className="text-lg font-bold mb-2">Hostel Insight</h4>
-            <p className="text-slate-400 text-sm leading-relaxed mb-4">
-              Your room maintenance for Surajtaal - α is pending. Weekly hygiene audit scheduled for Friday.
-            </p>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-lg hover:bg-blue-400 transition-colors">View Audit Details</button>
-          </div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-3xl -mr-10 -mt-10 pointer-events-none" />
-        </div>
-      </div>
-    </div>
-  );
 
-  const renderFacultyDashboard = () => (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard label="Students Advised" value="45" icon="👥" />
-        <MetricCard label="Research Grants" value="2" icon="🔬" />
-        <MetricCard label="Grievances Resolved" value="12" icon="✅" trend="4" />
+          <div className="flex items-center gap-4">
+            <button onClick={prevDate} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all">❮</button>
+            <button onClick={nextDate} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-all">❯</button>
+          </div>
+        </div>
       </div>
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h4 className="text-lg font-bold text-slate-800 mb-4">Lecture Schedule - North Campus</h4>
-        <div className="divide-y divide-slate-100">
+
+      <div className="p-8 space-y-6">
+        {/* Calendar Legend */}
+        <div className="flex flex-wrap gap-4 px-2">
           {[
-            { time: '09:00 AM', event: 'CS101 - Intro to Programming', location: 'Hall A1' },
-            { time: '11:30 AM', event: 'Faculty Meeting', location: 'Main Admin' },
-            { time: '02:00 PM', event: 'Lab Session - OS', location: 'Computer Lab 2' },
-          ].map((item, i) => (
-            <div key={i} className="py-4 flex items-center justify-between group">
-              <div className="flex gap-4">
-                <span className="font-mono text-blue-600 font-bold">{item.time}</span>
-                <div>
-                  <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{item.event}</p>
-                  <p className="text-xs text-slate-500">{item.location}</p>
-                </div>
-              </div>
-              <button className="text-slate-400 hover:text-slate-600">⋯</button>
+            { label: 'Public Holidays', color: 'bg-red-500' },
+            { label: 'Mid/Summer Breaks', color: 'bg-amber-500' },
+            { label: 'Academic Milestones', color: 'bg-blue-500' },
+            { label: 'Campus Fests', color: 'bg-purple-500' },
+          ].map(item => (
+            <div key={item.label} className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
+              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{item.label}</span>
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
 
-  const renderAdminDashboard = () => (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard label="Total Students" value="1,840" icon="🎓" />
-        <MetricCard label="Mess Revenue" value="₹1.2Cr" icon="💳" />
-        <MetricCard label="Maintenance Tasks" value="18" icon="🛠️" />
-        <MetricCard label="Safety Alerts" value="0" icon="🛡️" />
-      </div>
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-          <h4 className="text-lg font-bold text-slate-800">Operational Logs</h4>
-          <button className="text-blue-600 text-sm font-bold hover:underline transition-colors">Download CSV</button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-bold">
-              <tr>
-                <th className="px-6 py-3">Log ID</th>
-                <th className="px-6 py-3">Entity</th>
-                <th className="px-6 py-3">Action</th>
-                <th className="px-6 py-3">Time</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm divide-y divide-slate-100">
-              {[
-                { id: 'LOG-891', entity: 'Alder Mess', action: 'Menu Updated', time: '12:05' },
-                { id: 'LOG-892', entity: 'Surajtaal - α', action: 'Maintenance Ticket Closed', time: '11:50' },
-                { id: 'LOG-893', entity: 'Peepal Mess', action: 'Hygiene Audit Logged', time: '10:15' },
-              ].map((log, i) => (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-slate-400">{log.id}</td>
-                  <td className="px-6 py-4 font-bold text-slate-800">{log.entity}</td>
-                  <td className="px-6 py-4 text-slate-600">{log.action}</td>
-                  <td className="px-6 py-4 text-slate-500">{log.time}</td>
-                </tr>
+        {view === 'month' && (
+          <div className="grid grid-cols-7 border-t border-l border-slate-100">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+              <div key={d} className="p-4 border-r border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/30 text-center">
+                {d}
+              </div>
+            ))}
+            {calendarDays.map((day, i) => {
+              const events = day ? getEventsForDay(day) : [];
+              return (
+                <div key={i} className={`min-h-[160px] p-4 border-r border-b border-slate-100 group transition-all ${day ? 'hover:bg-slate-50/50' : 'bg-slate-50/10'}`}>
+                  {day && (
+                    <div className="flex flex-col h-full">
+                      <span className={`text-sm font-black transition-colors mb-2 ${events.some(e => e.type === 'holiday') ? 'text-red-500' : 'text-slate-300 group-hover:text-slate-800'}`}>{day}</span>
+                      <div className="space-y-1 overflow-y-auto max-h-[100px] scrollbar-hide">
+                        {events.map((e, ei) => (
+                          <div key={ei} className={`px-2 py-1.5 rounded border-l-2 text-[9px] font-bold leading-tight ${getEventStyle(e.type)}`}>
+                            {e.title}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {view === 'week' && (
+          <div className="space-y-4">
+             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dayName, idx) => {
+               const dayDate = new Date(currentDate);
+               const diff = currentDate.getDay() - (currentDate.getDay() === 0 ? -6 : 1);
+               dayDate.setDate(currentDate.getDate() - diff + idx);
+               const events = ACADEMIC_EVENTS.filter(e => {
+                 const start = new Date(e.date);
+                 if (e.endDate) {
+                    const end = new Date(e.endDate);
+                    return dayDate >= start && dayDate <= end;
+                 }
+                 return start.toDateString() === dayDate.toDateString();
+               });
+
+               return (
+                 <div key={dayName} className={`flex gap-6 items-start p-6 rounded-2xl border transition-all ${events.length > 0 ? 'bg-white border-slate-200 shadow-sm' : 'border-slate-50 opacity-40'}`}>
+                    <div className="w-16 flex flex-col items-center">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{dayName}</span>
+                       <span className={`text-2xl font-black ${events.some(e => e.type === 'holiday') ? 'text-red-500' : 'text-slate-800'}`}>{dayDate.getDate()}</span>
+                    </div>
+                    <div className="flex-1 space-y-3">
+                       {events.length > 0 ? events.map((e, ei) => (
+                         <div key={ei} className={`p-5 rounded-2xl border shadow-sm flex flex-col gap-2 group transition-all ${getEventStyle(e.type)}`}>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">{e.type}</p>
+                            <h4 className="text-lg font-black tracking-tight">{e.title}</h4>
+                            <p className="text-[10px] font-bold opacity-60">Full Day Event • Campus Node Kamand</p>
+                         </div>
+                       )) : (
+                         <p className="text-[10px] text-slate-400 font-medium italic mt-2">No scheduled academic activity.</p>
+                       )}
+                    </div>
+                 </div>
+               );
+             })}
+          </div>
+        )}
+
+        {view === 'day' && (
+          <div className="space-y-6 max-w-2xl mx-auto py-12">
+            <div className="text-center space-y-2 mb-12">
+              <h4 className="text-4xl font-black text-slate-800 tracking-tight">{currentDate.getDate()} {currentDate.toLocaleString('default', { month: 'long' })}</h4>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Campus Timeline Status</p>
+            </div>
+            
+            <div className="space-y-4">
+              {ACADEMIC_EVENTS.filter(e => {
+                const start = new Date(e.date);
+                if (e.endDate) {
+                  const end = new Date(e.endDate);
+                  return currentDate >= start && currentDate <= end;
+                }
+                return start.toDateString() === currentDate.toDateString();
+              }).map((e, ei) => (
+                <div key={ei} className={`p-10 rounded-[40px] border flex flex-col justify-between gap-6 transition-all ${getEventStyle(e.type)}`}>
+                  <div className="space-y-3">
+                    <span className="px-3 py-1 bg-white/20 rounded-lg text-[9px] font-black uppercase tracking-widest border border-white/20">{e.type}</span>
+                    <h5 className="text-3xl font-black tracking-tight">{e.title}</h5>
+                    <p className="text-[11px] font-bold opacity-70 leading-relaxed max-w-md">This event is part of the official IIT Mandi 2026 Academic Calendar. Please refer to the Dean (Academics) office for any official changes.</p>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+              
+              {ACADEMIC_EVENTS.filter(e => {
+                const start = new Date(e.date);
+                if (e.endDate) {
+                  const end = new Date(e.endDate);
+                  return currentDate >= start && currentDate <= end;
+                }
+                return start.toDateString() === currentDate.toDateString();
+              }).length === 0 && (
+                <div className="text-center py-24 border-2 border-dashed border-slate-100 rounded-[40px]">
+                  <span className="text-4xl block mb-4">📖</span>
+                  <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Normal Teaching/Research Day</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
+};
+
+const DEFAULT_CAMPUS_IMAGES = [
+  "https://www.iitmandi.ac.in/main/images/slider/campus_view.jpg",
+  "https://www.iitmandi.ac.in/main/images/slider/slide3.jpg",
+  "https://www.iitmandi.ac.in/main/images/slider/slide1.jpg"
+];
+
+const FALLBACK_CAMPUS_IMAGE = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070&auto=format&fit=crop";
+
+interface DashboardProps {
+  role: UserRole;
+  subTab: string;
+  onNavigateToHub?: (section: 'ANNOUNCEMENTS' | 'CARPOOL' | 'MAP') => void;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateToHub }) => {
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [logoUrl, setLogoUrl] = useState("https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Indian_Institute_of_Technology_Mandi_Logo.svg/1200px-Indian_Institute_of_Technology_Mandi_Logo.svg.png");
+  const [sliderImages, setSliderImages] = useState(DEFAULT_CAMPUS_IMAGES);
+
+  const nextImage = () => {
+    setCurrentImgIndex((prev) => (prev + 1) % sliderImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImgIndex((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
+  };
+
+  const handleLogoError = () => {
+    const fallback = "https://www.iitmandi.ac.in/main/images/IIT_Mandi_logo.png";
+    if (logoUrl !== fallback) {
+      setLogoUrl(fallback);
+    }
+  };
+
+  const handleSliderError = (index: number) => {
+    if (sliderImages[index] !== FALLBACK_CAMPUS_IMAGE) {
+      const newImages = [...sliderImages];
+      newImages[index] = FALLBACK_CAMPUS_IMAGE;
+      setSliderImages(newImages);
+    }
+  };
+
+  const renderSubContent = () => {
+    switch (subTab) {
+      case 'coursework':
+        return (
+          <div className="px-12 py-20 space-y-12">
+            <h2 className="text-3xl font-black text-[#1a1a1a]">Course Summary</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                { name: 'Introduction to Algorithms', code: 'CS201', progress: 85, color: 'bg-purple-600' },
+                { name: 'Microprocessor Systems', code: 'CS202', progress: 60, color: 'bg-blue-600' },
+                { name: 'Discrete Mathematics', code: 'MA102', progress: 92, color: 'bg-pink-600' },
+              ].map(course => (
+                <div key={course.code} className="bento-card p-8 space-y-6">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest">{course.code}</span>
+                    <span className="text-xs font-bold text-slate-400">Semester 4</span>
+                  </div>
+                  <h4 className="text-lg font-bold">{course.name}</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
+                      <span>Completion</span>
+                      <span>{course.progress}%</span>
+                    </div>
+                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={`h-full ${course.color}`} style={{ width: `${course.progress}%` }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'exams':
+        return (
+          <div className="px-12 py-20 space-y-12">
+            <h2 className="text-3xl font-black text-[#1a1a1a]">Exam Schedule</h2>
+            <div className="bento-card overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-[#f9f9fb] border-b border-black/5">
+                  <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <th className="px-10 py-5">Date</th>
+                    <th className="px-10 py-5">Course Code</th>
+                    <th className="px-10 py-5">Course Name</th>
+                    <th className="px-10 py-5">Venue</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/5 text-sm">
+                  {[
+                    { date: '12 Nov 2024', code: 'CS201', name: 'Algorithms', venue: 'LT-1, North Campus' },
+                    { date: '15 Nov 2024', code: 'CS202', name: 'Microprocessors', venue: 'LT-2, North Campus' },
+                    { date: '18 Nov 2024', code: 'MA102', name: 'Discrete Math', venue: 'Main Auditorium' },
+                  ].map((exam, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-10 py-6 font-bold">{exam.date}</td>
+                      <td className="px-10 py-6 font-mono text-purple-600">{exam.code}</td>
+                      <td className="px-10 py-6">{exam.name}</td>
+                      <td className="px-10 py-6 text-slate-500">{exam.venue}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      case 'campus life':
+        return (
+          <div className="px-12 py-20 space-y-12">
+            <h2 className="text-4xl font-black text-[#1a1a1a]">Campus Life</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <motion.div 
+                whileHover={{ y: -5 }}
+                className="bento-card p-10 bg-white"
+              >
+                <span className="text-4xl mb-4 block">🚗</span>
+                <h4 className="text-xl font-bold mb-2">AEGIS Carpool</h4>
+                <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">Need a ride to Mandi town or the Railway Station? Connect with fellow students and save on fares.</p>
+                <button 
+                  onClick={() => onNavigateToHub?.('CARPOOL')}
+                  className="bg-[#5b5fc7] text-white px-8 py-3 rounded-lg text-xs font-bold shadow-md hover:bg-[#4b4fa3] transition-all"
+                >
+                  Find a Pool
+                </button>
+              </motion.div>
+              <motion.div 
+                whileHover={{ y: -5 }}
+                className="bento-card p-10 bg-[#f8faff]"
+              >
+                <span className="text-4xl mb-4 block">🗺️</span>
+                <h4 className="text-xl font-bold mb-2">Interactive Map</h4>
+                <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">Navigate the North and South campuses with our precise 3D building layouts and room finder.</p>
+                <button 
+                  onClick={() => onNavigateToHub?.('MAP')}
+                  className="border border-[#5b5fc7] text-[#5b5fc7] px-8 py-3 rounded-lg text-xs font-bold hover:bg-[#5b5fc7]/5 transition-all"
+                >
+                  Open Map
+                </button>
+              </motion.div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-white">
+            <div className="px-12 py-8 flex items-center justify-between border-b border-black/5">
+              <div className="flex items-center gap-8">
+                <img 
+                  src={logoUrl} 
+                  alt="IIT Mandi Logo" 
+                  className="h-24 w-auto drop-shadow-sm"
+                  onError={handleLogoError}
+                />
+                <div className="flex flex-col">
+                  <h2 className="text-4xl font-bold text-[#002147] tracking-tighter">भारतीय प्रौद्योगिकी संस्थान मण्डी</h2>
+                  <h2 className="text-3xl font-black text-[#002147] tracking-tight uppercase">Indian Institute of Technology Mandi</h2>
+                </div>
+              </div>
+            </div>
+
+            <section className="relative w-full aspect-[21/9] min-h-[500px] overflow-hidden group shadow-2xl bg-slate-100">
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={currentImgIndex}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                  src={sliderImages[currentImgIndex]} 
+                  alt={`Campus View ${currentImgIndex + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  onError={() => handleSliderError(currentImgIndex)}
+                />
+              </AnimatePresence>
+              
+              <button 
+                onClick={prevImage}
+                className="absolute left-10 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/60 z-10 backdrop-blur-sm"
+              >
+                <span className="text-3xl font-bold">❮</span>
+              </button>
+              <button 
+                onClick={nextImage}
+                className="absolute right-10 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/60 z-10 backdrop-blur-sm"
+              >
+                <span className="text-3xl font-bold">❯</span>
+              </button>
+
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
+                {sliderImages.map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`h-1.5 rounded-full transition-all ${i === currentImgIndex ? 'w-8 bg-white' : 'w-2 bg-white/40'}`} 
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="px-12 py-24 bg-white">
+              <div className="flex flex-col lg:flex-row justify-between items-start gap-16">
+                <div className="space-y-8 flex-1">
+                  <h2 className="text-6xl font-bold text-[#1a1a1a] relative inline-block">
+                    About IIT Mandi
+                    <div className="absolute -bottom-3 left-0 w-full h-[6px] bg-[#0070c0]" />
+                  </h2>
+                  <p className="max-w-4xl text-xl text-[#616161] leading-relaxed pt-4 font-medium">
+                    Indian Institute of Technology Mandi (IIT Mandi) is one of the eight newer IITs established by the Ministry of Education, Government of India. Nestled in the picturesque Uhl River valley in the Shivalik Range of the Himalayas, the campus provides a serene and innovative environment for over 2,400 students and world-class faculty.
+                  </p>
+                  <p className="max-w-4xl text-lg text-[#86868b] leading-relaxed font-medium">
+                    The Institute offers an environment that fosters curiosity and innovation. Our mission is to be a leader in science and technology education, knowledge creation, and innovation, in an India-centric and world-relevant manner.
+                  </p>
+                </div>
+                
+                <div className="w-full lg:w-96 space-y-8">
+                  <button className="w-full bg-[#FFB81C] text-[#002147] py-6 px-8 rounded-sm font-black text-base uppercase tracking-[0.25em] shadow-xl hover:bg-[#e0a21a] hover:-translate-y-1 transition-all">
+                    DIRECTOR'S OFFICE
+                  </button>
+                  <div className="bento-card p-10 border-l-[12px] border-l-[#0070c0] bg-[#f8f9fa] shadow-lg">
+                    <p className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.4em] mb-4">Strategic Focus</p>
+                    <h4 className="text-xl font-bold text-[#1a1a1a] leading-tight mb-3 tracking-tight">Sustainable Mountain Development</h4>
+                    <p className="text-sm text-[#616161] font-medium leading-relaxed">Pioneering green technologies for the Himalayan region and establishing a world-class innovation ecosystem.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Academic Calendar Section */}
+            <section className="px-12 py-32 border-t border-black/5 bg-[#fdfdfd]">
+               <div className="flex flex-col gap-16">
+                <div>
+                   <p className="text-[#5b5fc7] font-black text-[12px] uppercase tracking-[0.5em] mb-4">University Timeline</p>
+                   <h2 className="text-5xl font-black text-[#1a1a1a] tracking-tight">Official Academic Node</h2>
+                   <p className="text-slate-500 text-sm mt-4 font-medium max-w-2xl italic leading-relaxed">
+                     The official 2026 Academic Calendar for IIT Mandi. This synchronized temporal node manages teaching days, examination windows, and official residential breaks.
+                   </p>
+                </div>
+                <CampusCalendar />
+              </div>
+            </section>
+
+            <section className="px-12 py-32 border-t border-black/5 bg-[#fdfdfd]">
+               <div className="flex flex-col gap-16">
+                <div>
+                   <p className="text-purple-600 font-black text-[12px] uppercase tracking-[0.5em] mb-4">Ecosystem Services</p>
+                   <h2 className="text-5xl font-black text-[#1a1a1a] tracking-tight">Unified Digital Protocol</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                  <FeatureCard 
+                    icon="📂" 
+                    title="Academic Vault" 
+                    desc="Unified access to your transcripts and course records in a secure digital node with instant verification." 
+                  />
+                  <FeatureCard 
+                    icon="🍱" 
+                    title="Mess & Hostel" 
+                    desc="Manage your dining, rebates, and residential maintenance through a single integrated dashboard." 
+                  />
+                  <FeatureCard 
+                    icon="💼" 
+                    title="Career Portal" 
+                    desc="Direct linkage to faculty-led research, startup incubation, and global internship opportunities." 
+                  />
+                </div>
+              </div>
+            </section>
+          </div>
+        );
+    }
+  };
 
   return (
-    <div className="animate-in fade-in duration-500">
-      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-        <div>
-          <h3 className="text-3xl font-extrabold text-slate-900">Welcome, {role === UserRole.STUDENT ? 'Student' : role}!</h3>
-          <p className="text-slate-500 font-medium">IIT Mandi Unified Ecosystem | North & South Campus Connectivity</p>
-        </div>
-        <div className="text-left sm:text-right">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Local Environment</p>
-          <p className="text-xl font-bold text-slate-800">14°C Mandi, HP</p>
-        </div>
-      </div>
-
-      {role === UserRole.STUDENT && renderStudentDashboard()}
-      {role === UserRole.FACULTY && renderFacultyDashboard()}
-      {role === UserRole.ADMIN && renderAdminDashboard()}
+    <div className="w-full h-full">
+      {renderSubContent()}
     </div>
   );
 };

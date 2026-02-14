@@ -1,7 +1,8 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Initialize Gemini API following the coding guidelines with the direct environment variable.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const geminiService = {
   /**
@@ -27,7 +28,8 @@ export const geminiService = {
               urgency: { type: Type.STRING },
               summary: { type: Type.STRING }
             },
-            required: ["category", "urgency", "summary"]
+            // Fix: Using 'propertyOrdering' instead of 'required' as per coding guidelines for Gemini SDK
+            propertyOrdering: ["category", "urgency", "summary"]
           }
         }
       });
@@ -56,7 +58,8 @@ export const geminiService = {
                 title: { type: Type.STRING },
                 description: { type: Type.STRING }
               },
-              required: ["title", "description"]
+              // Fix: Using 'propertyOrdering' instead of 'required' as per coding guidelines for Gemini SDK
+              propertyOrdering: ["title", "description"]
             }
           }
         }

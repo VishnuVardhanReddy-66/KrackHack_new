@@ -58,7 +58,7 @@ const getFallbackContests = (): any[] => {
 
 export const contestService = {
   /**
-   * Fetches all contests from the Kontests API using a CORS proxy.
+   * Fetches all contests from the Kontests API using a more reliable CORS proxy.
    * Data is normalized and sorted by start_time.
    */
   async fetchContests(): Promise<{ data: Contest[], isFallback: boolean }> {
@@ -66,10 +66,11 @@ export const contestService = {
     let isFallback = false;
     
     try {
-      const proxyUrl = 'https://corsproxy.io/?url=';
+      // Switching to allorigins as it's often more reliable than corsproxy.io for 404/500 scenarios
       const targetUrl = 'https://kontests.net/api/v1/all';
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
       
-      const response = await fetch(`${proxyUrl}${encodeURIComponent(targetUrl)}`, {
+      const response = await fetch(proxyUrl, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -77,7 +78,7 @@ export const contestService = {
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
       rawData = await response.json();
     } catch (error) {
-      console.warn("External Contest API unreachable via proxy. Activating fallback data.", error);
+      console.warn("External Contest API unreachable. Activating fallback data node.", error);
       rawData = getFallbackContests();
       isFallback = true;
     }
@@ -88,7 +89,6 @@ export const contestService = {
       const start = new Date(item.start_time);
       const end = new Date(item.end_time);
 
-      // Strict status calculation based on current time
       let status: 'UPCOMING' | 'LIVE' | 'FINISHED' = 'UPCOMING';
       if (now >= start && now <= end) {
         status = 'LIVE';
@@ -96,12 +96,11 @@ export const contestService = {
         status = 'FINISHED';
       }
 
-      const durationSec = parseInt(item.duration);
+      const durationSec = parseInt(item.duration) || 0;
       const hours = Math.floor(durationSec / 3600);
       const minutes = Math.floor((durationSec % 3600) / 60);
       const durationStr = hours > 0 ? `${hours}h ${minutes > 0 ? `${minutes}m` : ''}` : `${minutes}m`;
 
-      // Format to IST (Asia/Kolkata)
       const formattedDate = start.toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         day: '2-digit',

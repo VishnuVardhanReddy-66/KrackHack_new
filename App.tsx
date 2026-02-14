@@ -16,6 +16,8 @@ const App: React.FC = () => {
   const [currentRole, setCurrentRole] = useState<UserRole>(UserRole.STUDENT);
   const [userId, setUserId] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<string>('general');
+  const [hubSection, setHubSection] = useState<'ANNOUNCEMENTS' | 'CARPOOL' | 'MAP'>('ANNOUNCEMENTS');
 
   // Clear tab on role switch
   useEffect(() => {
@@ -32,6 +34,7 @@ const App: React.FC = () => {
     setUserId(id);
     setIsAuthenticated(true);
     setActiveTab('dashboard');
+    setActiveSubTab('general');
   };
 
   const handleLogout = () => {
@@ -39,10 +42,15 @@ const App: React.FC = () => {
     setUserId('');
   };
 
+  const navigateToHubSection = (section: 'ANNOUNCEMENTS' | 'CARPOOL' | 'MAP') => {
+    setHubSection(section);
+    setActiveTab('hub');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard role={currentRole} />;
+        return <Dashboard role={currentRole} subTab={activeSubTab} onNavigateToHub={navigateToHubSection} />;
       case 'hostel-mess':
         return <MessHostelPortal />;
       case 'programming-hub':
@@ -54,7 +62,7 @@ const App: React.FC = () => {
       case 'opportunities':
         return <OpportunityPortal />;
       case 'hub':
-        return <CampusHub />;
+        return <CampusHub initialSection={hubSection} />;
       case 'admin-panel':
         return (
           <div className="bg-white p-8 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -83,7 +91,7 @@ const App: React.FC = () => {
           </div>
         );
       default:
-        return <Dashboard role={currentRole} />;
+        return <Dashboard role={currentRole} subTab={activeSubTab} onNavigateToHub={navigateToHubSection} />;
     }
   };
 
@@ -97,6 +105,8 @@ const App: React.FC = () => {
       activeTab={activeTab} 
       onTabChange={setActiveTab}
       onLogout={handleLogout}
+      activeSubTab={activeSubTab}
+      onSubTabChange={setActiveSubTab}
     >
       {renderContent()}
     </Layout>

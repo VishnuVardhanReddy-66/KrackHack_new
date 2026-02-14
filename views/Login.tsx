@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserRole } from '../types';
+import { motion } from 'framer-motion';
 
 interface LoginProps {
   onLogin: (role: UserRole, id: string) => void;
@@ -27,42 +28,39 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   };
 
-  const getPlaceholder = () => {
-    switch (selectedRole) {
-      case UserRole.STUDENT: return 'e.g. B21001';
-      case UserRole.FACULTY: return 'e.g. F-1024';
-      case UserRole.ADMIN: return 'Administrator Username';
-      default: return 'Enter your ID';
-    }
-  };
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-950 relative overflow-hidden font-sans">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-800 rounded-full blur-[120px]" />
+    <div className="min-h-screen w-full flex items-center justify-center bg-white relative overflow-hidden">
+      {/* Mesh Decor */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-purple-100 rounded-full blur-[150px] opacity-40 animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[150px] opacity-40 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] bg-pink-100 rounded-full blur-[120px] opacity-30 animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
-      <div className="w-full max-w-md px-6 relative z-10 animate-in fade-in zoom-in duration-500">
-        <div className="bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/30 mb-4">
+      <div className="w-full max-w-md px-8 relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.28, 0.11, 0.32, 1] }}
+          className="bg-white/70 backdrop-blur-2xl p-12 rounded-[40px] border border-white/60 shadow-[0_20px_80px_rgba(0,0,0,0.06)]"
+        >
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#5b5fc7] rounded-2xl shadow-xl mb-6">
               <span className="text-3xl">🛡️</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">AEGIS Protocol</h1>
-            <p className="text-slate-400 text-sm mt-2">IIT Mandi Unified Digital Ecosystem</p>
+            <h1 className="text-3xl font-black text-[#242424] tracking-tight">AEGIS Protocol</h1>
+            <p className="text-[#616161] text-xs font-bold mt-2 uppercase tracking-[0.3em]">Access Authorized Node</p>
           </div>
 
-          <div className="flex p-1 bg-slate-900/50 rounded-xl mb-8 border border-white/5">
+          <div className="flex p-1 bg-black/5 rounded-xl mb-10">
             {(Object.keys(UserRole) as Array<keyof typeof UserRole>).map((role) => (
               <button
                 key={role}
                 onClick={() => setSelectedRole(UserRole[role])}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                className={`flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest ${
                   selectedRole === UserRole[role]
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-slate-500 hover:text-slate-300'
+                    ? 'bg-white text-[#242424] shadow-sm'
+                    : 'text-[#616161] hover:text-[#242424]'
                 }`}
               >
                 {role}
@@ -70,9 +68,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black text-[#616161] uppercase tracking-widest ml-1">
                 {getLabel()}
               </label>
               <input
@@ -80,14 +78,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 required
                 value={idValue}
                 onChange={(e) => setIdValue(e.target.value)}
-                placeholder={getPlaceholder()}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                placeholder="Enter identifier..."
+                className="w-full bg-white border border-black/5 rounded-xl px-6 py-4 text-[#242424] placeholder:text-[#d2d2d7] focus:ring-2 focus:ring-purple-500/20 outline-none transition-all font-bold"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                Password
+            <div className="space-y-3">
+              <label className="block text-[10px] font-black text-[#616161] uppercase tracking-widest ml-1">
+                Security Token
               </label>
               <input
                 type="password"
@@ -95,36 +93,28 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                className="w-full bg-white border border-black/5 rounded-xl px-6 py-4 text-[#242424] placeholder:text-[#d2d2d7] focus:ring-2 focus:ring-purple-500/20 outline-none transition-all font-bold"
               />
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] px-1">
-              <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
-                <input type="checkbox" className="rounded border-white/10 bg-slate-900" />
-                Remember Me
-              </label>
-              <button type="button" className="text-blue-400 font-bold hover:underline">Forgot ID/Pass?</button>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98]"
+              className="btn-primary w-full py-5 text-xs uppercase tracking-[0.2em]"
             >
-              Initialize Session
+              Authorize Session
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center">
-            <p className="text-slate-500 text-[10px] uppercase tracking-widest font-mono">
-              Secure Auth Node: 10.42.0.1
+          <div className="mt-12 text-center">
+            <p className="text-[#616161] text-[9px] uppercase tracking-[0.4em] font-mono">
+              ENCRYPTED SECURE CHANNEL ALPHA
             </p>
           </div>
-        </div>
+        </motion.div>
         
-        <p className="text-center text-slate-600 text-[10px] mt-6 leading-relaxed">
-          Access is restricted to authorized personnel of IIT Mandi.<br />
-          Unauthorized access attempts are logged and monitored.
+        <p className="text-center text-[#86868b] text-[10px] mt-10 leading-relaxed font-medium">
+          Authorized personnel only. Infrastructure managed by AEGIS Core. <br />
+          Network activity is logged for security auditing.
         </p>
       </div>
     </div>
