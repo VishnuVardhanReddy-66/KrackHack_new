@@ -286,8 +286,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateToHub }) => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
-  // Using official institutional logo as primary source
-  const [logoUrl, setLogoUrl] = useState("https://www.iitmandi.ac.in/main/images/IIT_Mandi_logo.png");
+  const [logoFailed, setLogoFailed] = useState(false);
   const [sliderImages, setSliderImages] = useState(DEFAULT_CAMPUS_IMAGES);
 
   const nextImage = () => {
@@ -296,14 +295,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
 
   const prevImage = () => {
     setCurrentImgIndex((prev) => (prev - 1 + sliderImages.length) % sliderImages.length);
-  };
-
-  const handleLogoError = () => {
-    // Fallback to a stable Wikimedia Commons link if official site image fails to load
-    const fallback = "https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Indian_Institute_of_Technology_Mandi_Logo.svg/1200px-Indian_Institute_of_Technology_Mandi_Logo.svg.png";
-    if (logoUrl !== fallback) {
-      setLogoUrl(fallback);
-    }
   };
 
   const handleSliderError = (index: number) => {
@@ -417,17 +408,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
       default:
         return (
           <div className="bg-white">
-            <div className="px-12 py-8 flex items-center justify-between border-b border-black/5">
-              <div className="flex items-center gap-8">
-                <img 
-                  src={logoUrl} 
-                  alt="IIT Mandi Logo" 
-                  className="h-24 w-auto drop-shadow-sm"
-                  onError={handleLogoError}
-                />
-                <div className="flex flex-col">
-                  <h2 className="text-4xl font-bold text-[#002147] tracking-tighter">भारतीय प्रौद्योगिकी संस्थान मण्डी</h2>
-                  <h2 className="text-3xl font-black text-[#002147] tracking-tight uppercase">Indian Institute of Technology Mandi</h2>
+            {/* Optimized Institutional Header with specific typography and alignment */}
+            <div className="bg-white border-b border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.04)] px-6 py-8">
+              <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
+                <div className="w-[60px] sm:w-[80px] shrink-0 flex items-center justify-center">
+                  {!logoFailed ? (
+                    <img 
+                      src="https://www.iitmandi.ac.in/images/logo.png" 
+                      alt="IIT Mandi Logo" 
+                      className="w-full h-auto object-contain"
+                      style={{ width: '80px' }}
+                      onError={() => setLogoFailed(true)}
+                    />
+                  ) : (
+                    <div className="w-[60px] sm:w-[80px] h-[60px] sm:h-[80px] bg-slate-50 rounded-xl flex items-center justify-center border border-slate-200">
+                      <span className="text-[#1e40af] font-black text-xl tracking-tighter">IIT</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-0.5">
+                  <h1 
+                    className="text-[1.5rem] font-medium text-[#1e40af] leading-tight"
+                    style={{ fontFamily: "'Noto Sans Devanagari', sans-serif" }}
+                  >
+                    भारतीय प्रौद्योगिकी संस्थान मण्डी
+                  </h1>
+                  <h2 className="text-[1.25rem] font-bold text-[#1e293b] tracking-tight uppercase leading-tight">
+                    INDIAN INSTITUTE OF TECHNOLOGY MANDI
+                  </h2>
                 </div>
               </div>
             </div>
