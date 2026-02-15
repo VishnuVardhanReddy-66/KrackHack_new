@@ -15,25 +15,44 @@ const GRADE_POINTS: Record<string, number> = {
   'S': 10, 'A': 9, 'B': 8, 'C': 7, 'D': 6, 'E': 4, 'F': 0
 };
 
+// Seeded data for random course generation
+const ODD_COURSE_POOL: Record<number, { code: string, name: string }[]> = {
+  1: [{ code: 'PH101', name: 'Quantum Physics' }, { code: 'MA101', name: 'Calculus I' }, { code: 'ME101', name: 'Engineering Graphics' }],
+  3: [{ code: 'CS201', name: 'Data Structures' }, { code: 'MA201', name: 'Discrete Structures' }, { code: 'EE201', name: 'Network Theory' }],
+  5: [{ code: 'CS301', name: 'Database Systems' }, { code: 'CS302', name: 'Operating Systems' }, { code: 'HS301', name: 'Tech Communication' }],
+  7: [{ code: 'CS401', name: 'Machine Learning' }, { code: 'CS402', name: 'Cloud Computing' }, { code: 'MG401', name: 'Entrepreneurship' }]
+};
+
+const EVEN_COURSE_POOL: Record<number, { code: string, name: string }[]> = {
+  2: [{ code: 'CS102', name: 'Intro to Python' }, { code: 'CY101', name: 'Applied Chemistry' }, { code: 'EE102', name: 'Digital Logic' }],
+  4: [{ code: 'CS202', name: 'Algorithms Design' }, { code: 'CS203', name: 'Computer Organization' }, { code: 'MA202', name: 'Linear Algebra' }],
+  6: [{ code: 'CS303', name: 'Artificial Intelligence' }, { code: 'CS304', name: 'Compiler Design' }, { code: 'CS305', name: 'Software Eng' }],
+  8: [{ code: 'CS403', name: 'Deep Learning' }, { code: 'CS404', name: 'Cyber Security' }, { code: 'PR401', name: 'Major Project' }]
+};
+
 interface AcademicVaultProps {
   user: User;
-  onBroadcast?: (ann: Announcement) => void;
   allCourses?: CourseDetails[];
   onAddCourse?: (course: any) => void;
   onRemoveCourse?: (id: string) => void;
+  onAddAnnouncement?: (ann: Announcement) => void;
 }
 
 export const AcademicVault: React.FC<AcademicVaultProps> = ({ 
   user, 
   allCourses = [],
   onAddCourse,
-  onRemoveCourse
+  onRemoveCourse,
+  onAddAnnouncement
 }) => {
   const [activeCourse, setActiveCourse] = useState<CourseDetails | null>(null);
   const [viewType, setViewType] = useState<'CURRENT' | 'ARCHIVED' | 'GPA'>('CURRENT');
   const [selectedSemester, setSelectedSemester] = useState<number>(1);
   const [isAddingCourse, setIsAddingCourse] = useState(false);
   
+  // Announcement composition state (for Faculty)
+  const [annData, setAnnData] = useState({ title: '', content: '' });
+
   // Course Form State (for Admin)
   const [courseData, setCourseData] = useState({
     code: '',
@@ -77,16 +96,51 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
     if (isAdmin) {
       return allCourses.filter(c => c.semester === selectedSemester);
     }
+    
     if (isFaculty) {
-      return allCourses.filter(c => c.instructor.includes(user.name.replace('Prof. ', ''))); 
+      const cycle = user.semester; // 1 for ODD, 2 for EVEN from login
+      const semestersToGen = cycle === 1 ? [1, 3, 5, 7] : [2, 4, 6, 8];
+      const pool = cycle === 1 ? ODD_COURSE_POOL : EVEN_COURSE_POOL;
+      
+      // Generate 1-2 random courses for each semester in the cycle
+      const facultyCourses: CourseDetails[] = [];
+      
+      semestersToGen.forEach(sem => {
+        const semPool = pool[sem];
+        // Select 1 or 2 random courses from pool
+        const count = Math.floor(Math.random() * 2) + 1; // 1 or 2
+        const shuffled = [...semPool].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, count);
+        
+        selected.forEach(course => {
+          facultyCourses.push({
+            id: `fac-gen-${sem}-${course.code}`,
+            code: course.code,
+            name: course.name,
+            instructor: user.name,
+            teacher: user.name,
+            credits: 4,
+            semester: sem,
+            materialsCount: 10,
+            progress: 0,
+            syllabusMid: ['Foundations', 'Unit 1 & 2', 'Initial Review'],
+            syllabusEnd: ['Advanced Topics', 'Final Project', 'Course Wrap-up'],
+            midSemDate: 'Oct 2026',
+            endSemDate: 'Dec 2026'
+          });
+        });
+      });
+      
+      return facultyCourses;
     }
+    
     if (viewType === 'CURRENT') {
       return allCourses.filter(c => c.semester === currentSemester);
     } else if (viewType === 'ARCHIVED') {
       return allCourses.filter(c => c.semester < currentSemester);
     }
     return [];
-  }, [viewType, currentSemester, isFaculty, isAdmin, allCourses, user.name, selectedSemester]);
+  }, [viewType, currentSemester, isFaculty, isAdmin, allCourses, user.name, selectedSemester, user.semester]);
 
   const handlePostCourse = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +165,28 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
     setCourseData({ code: '', name: '', credits: 3, instructor: '', syllabusMid: '', syllabusEnd: '', midSemDate: '', endSemDate: '' });
   };
 
+  const handleSendAnnouncement = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCourse || !onAddAnnouncement) return;
+    
+    const newAnn: Announcement = {
+      id: `faculty-${Date.now()}`,
+      title: annData.title,
+      author: user.name,
+      date: 'Just Now',
+      content: annData.content,
+      elaboration: `Course Specific Broadcast for ${activeCourse.code}: ${activeCourse.name}. Target: All Semester ${activeCourse.semester} students.`,
+      priority: 'MEDIUM',
+      targetAudience: 'STUDENT',
+      targetSemester: activeCourse.semester,
+      courseCode: activeCourse.code
+    };
+    
+    onAddAnnouncement(newAnn);
+    setAnnData({ title: '', content: '' });
+    setActiveCourse(null);
+  };
+
   return (
     <div className="py-12 px-6 md:px-12 relative min-h-screen">
       <div className="max-w-7xl mx-auto space-y-12">
@@ -118,25 +194,38 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
         <header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8 border-b border-black/5 pb-12">
           <div className="space-y-2">
             <h3 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">
-              {isAdmin ? 'Course Registry' : 'Academic Vault'}
+              {isAdmin ? 'Course Registry' : isFaculty ? 'Teaching Terminal' : 'Academic Vault'}
             </h3>
             <div className="flex items-center gap-4 text-slate-400">
                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Node ID: {user.id}</span>
                <div className="w-1 h-1 bg-slate-200 rounded-full" />
                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Auth Level: {user.role}</span>
+               {isFaculty && (
+                 <>
+                   <div className="w-1 h-1 bg-slate-200 rounded-full" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-600">Cycle Sync: {user.semester === 1 ? 'ODD SEMESTERS' : 'EVEN SEMESTERS'}</span>
+                 </>
+               )}
             </div>
           </div>
           
           {!isAdmin && (
             <div className="flex items-center gap-10 bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40">
-              <div className="text-center">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Aggregated CGPA</p>
-                  <p className="text-4xl font-black text-[#5b5fc7] leading-none">{gpaStats?.cgpa || '0.00'}</p>
-              </div>
+              {isFaculty ? (
+                <div className="text-center">
+                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Active Registry Nodes</p>
+                   <p className="text-4xl font-black text-[#5b5fc7] leading-none">{displayedCourses.length}</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Aggregated CGPA</p>
+                    <p className="text-4xl font-black text-[#5b5fc7] leading-none">{gpaStats?.cgpa || '0.00'}</p>
+                </div>
+              )}
               <div className="w-px h-12 bg-slate-100" />
               <div className="text-center">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{isFaculty ? 'Teaching' : 'Current'} Semester</p>
-                  <p className="text-4xl font-black text-slate-800 leading-none">0{currentSemester}</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">{isFaculty ? 'Session Cycle' : 'Current Semester'}</p>
+                  <p className="text-4xl font-black text-slate-800 leading-none">{isFaculty ? (user.semester === 1 ? 'ODD' : 'EVEN') : `0${currentSemester}`}</p>
               </div>
             </div>
           )}
@@ -174,7 +263,7 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
                 <p className="text-sm font-bold text-slate-800">Semester 0{selectedSemester} Cluster</p>
              </div>
           </div>
-        ) : (
+        ) : !isFaculty && (
           <div className="flex gap-4 p-1.5 bg-slate-100/50 rounded-2xl w-fit border border-slate-200/60">
             {(['CURRENT', 'ARCHIVED', 'GPA'] as const).map(t => (
               <button
@@ -191,7 +280,7 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
         )}
 
         <AnimatePresence mode="wait">
-          {viewType === 'GPA' && !isAdmin && (
+          {viewType === 'GPA' && !isAdmin && !isFaculty && (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -238,15 +327,15 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
                   layoutId={course.id}
                   onClick={() => setActiveCourse(course)}
                   whileHover={{ y: -10, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.08)" }}
-                  className="bg-white p-10 rounded-[56px] border border-slate-100 shadow-sm cursor-pointer group flex flex-col justify-between h-[380px] transition-all relative overflow-hidden"
+                  className="bg-white p-10 rounded-[56px] border border-slate-100 shadow-sm cursor-pointer group flex flex-col justify-between h-[400px] transition-all relative overflow-hidden"
                 >
                   <div className="space-y-6">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{course.code}</span>
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{course.code} • SEM 0{course.semester}</span>
                         <h4 className="text-2xl font-black text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{course.name}</h4>
                       </div>
-                      {course.grade && !isAdmin && (
+                      {course.grade && !isAdmin && !isFaculty && (
                         <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center border border-emerald-100">
                            <span className="text-xl font-black">{course.grade}</span>
                         </div>
@@ -266,7 +355,7 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
                     </div>
                   </div>
 
-                  {!isAdmin && (
+                  {!isAdmin && !isFaculty && (
                     <div className="space-y-4">
                       <div className="flex justify-between text-[9px] font-black text-slate-300 uppercase tracking-widest">
                           <span>Registry Sync</span>
@@ -282,16 +371,21 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
                     </div>
                   )}
 
-                  {isAdmin && (
-                    <div className="pt-6 border-t border-slate-50 mt-auto">
-                       <p className="text-indigo-600 font-black text-[9px] uppercase tracking-widest">Edit Node Protocol ❯</p>
+                  {(isAdmin || isFaculty) && (
+                    <div className="pt-6 border-t border-slate-50 mt-auto flex items-center justify-between">
+                       <p className="text-indigo-600 font-black text-[9px] uppercase tracking-widest">
+                          {isFaculty ? 'Initialize Protocol ❯' : 'Edit Node Protocol ❯'}
+                       </p>
+                       {isFaculty && (
+                         <span className="text-[9px] font-black px-3 py-1 bg-purple-50 text-purple-600 rounded-full border border-purple-100">BROADCAST ACCESS</span>
+                       )}
                     </div>
                   )}
                 </motion.div>
               )) : (
                 <div className="col-span-full py-40 bg-slate-50/50 border-2 border-dashed border-slate-200/50 rounded-[64px] flex flex-col items-center justify-center">
                   <span className="text-7xl block mb-8 grayscale opacity-20">📡</span>
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">No records found for this registry node</p>
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">No records found for this teaching node</p>
                 </div>
               )}
             </motion.div>
@@ -317,29 +411,74 @@ export const AcademicVault: React.FC<AcademicVaultProps> = ({
 
                 <div className="space-y-8">
                   <div className="space-y-2">
-                    <p className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.4em]">{activeCourse.code} • Institutional Registry</p>
+                    <p className="text-indigo-600 font-black text-[10px] uppercase tracking-[0.4em]">{activeCourse.code} • Semester 0{activeCourse.semester} Registry</p>
                     <h3 className="text-5xl font-black text-slate-900 tracking-tighter leading-none">{activeCourse.name}</h3>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-slate-50">
                     <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-50">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Instructor</p>
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Authorized Teacher</p>
                        <p className="text-sm font-bold text-slate-800">{activeCourse.teacher}</p>
                     </div>
                     <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-50">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Credits</p>
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Academic Credits</p>
                        <p className="text-sm font-bold text-slate-800">{activeCourse.credits} Units</p>
                     </div>
                     <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Mid-Sem Date</p>
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Mid-Sem Window</p>
                        <p className="text-sm font-bold text-slate-800">{activeCourse.midSemDate}</p>
                     </div>
                     <div className="bg-slate-50/50 p-6 rounded-[32px] border border-slate-100">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">End-Sem Date</p>
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">End-Sem Window</p>
                        <p className="text-sm font-bold text-slate-800">{activeCourse.endSemDate}</p>
                     </div>
                   </div>
                 </div>
+
+                {isFaculty && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-purple-50 p-12 rounded-[48px] border border-purple-100 shadow-sm space-y-8"
+                  >
+                     <div className="space-y-2">
+                        <h4 className="text-2xl font-black text-purple-900 tracking-tight uppercase leading-none">Broadcast Protocol: Cluster {activeCourse.semester}</h4>
+                        <p className="text-[10px] font-black text-purple-400 uppercase tracking-[0.3em]">Initialize Transmission to all course registrants</p>
+                     </div>
+                     <form onSubmit={handleSendAnnouncement} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div className="space-y-2">
+                             <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1">Protocol Header</label>
+                             <input 
+                                required 
+                                className="w-full bg-white border border-purple-100 rounded-[20px] px-8 py-4 font-bold outline-none focus:ring-2 focus:ring-purple-500/20 shadow-sm" 
+                                placeholder="e.g. Laboratory Session Update" 
+                                value={annData.title}
+                                onChange={e => setAnnData({...annData, title: e.target.value})}
+                             />
+                           </div>
+                           <div className="space-y-2">
+                              <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1">Target Registry</label>
+                              <div className="w-full bg-white border border-purple-100 rounded-[20px] px-8 py-4 font-bold text-slate-400 flex items-center justify-between">
+                                 <span>Semester 0{activeCourse.semester} Node</span>
+                                 <span className="text-[9px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded">LOCK</span>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1">Data Payload</label>
+                           <textarea 
+                              required 
+                              className="w-full bg-white border border-purple-100 rounded-[24px] px-8 py-5 font-medium h-40 resize-none outline-none focus:ring-2 focus:ring-purple-500/20 shadow-sm" 
+                              placeholder="Enter the broadcast message for your students..." 
+                              value={annData.content}
+                              onChange={e => setAnnData({...annData, content: e.target.value})}
+                           />
+                        </div>
+                        <button type="submit" className="w-full bg-purple-600 text-white py-6 rounded-[24px] font-black uppercase tracking-widest shadow-xl shadow-purple-200 hover:bg-purple-700 transition-all active:scale-[0.98]">Authorize Global Broadcast ❯</button>
+                     </form>
+                  </motion.div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                    <div className="space-y-6">

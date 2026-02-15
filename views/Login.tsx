@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserRole } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,7 +34,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         const num = parseInt(match[1]);
         if (num >= 1 && num <= 100) {
           if (password === match[1]) {
-            onLogin(UserRole.FACULTY, id.toUpperCase());
+            // Passing 1 for ODD, 2 for EVEN cycle
+            onLogin(UserRole.FACULTY, id.toUpperCase(), semesterCycle === 'ODD' ? 1 : 2);
           } else {
             setError('Incorrect password. Use the 3-digit suffix (e.g., 001).');
           }
@@ -96,7 +96,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 type="button"
                 onClick={() => { setRole(r); setError(null); }}
                 className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  role === r ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                  role === r ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
                 {r}
@@ -130,7 +130,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           </div>
 
-          {role === UserRole.STUDENT && (
+          {(role === UserRole.STUDENT || role === UserRole.FACULTY) && (
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cycle Sync</label>
               <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">

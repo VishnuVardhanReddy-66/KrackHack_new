@@ -154,6 +154,7 @@ const App: React.FC = () => {
             allCourses={allCourses} 
             onAddCourse={addCourse} 
             onRemoveCourse={removeCourse} 
+            onAddAnnouncement={addAnnouncement}
           />
         );
       case 'opportunities':
