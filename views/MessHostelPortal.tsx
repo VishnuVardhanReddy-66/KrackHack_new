@@ -149,7 +149,7 @@ export const MessHostelPortal: React.FC = () => {
   const [activeMess, setActiveMess] = useState<MessName>('Alder');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'warden-contacts': false,
-    'emergency-node': false,
+    'emergency-support': false,
     'maintenance': false
   });
 
@@ -421,9 +421,9 @@ export const MessHostelPortal: React.FC = () => {
           </AccordionSection>
 
           <AccordionSection 
-            title="Emergency Node" 
-            id="emergency-node" 
-            isOpen={openSections['emergency-node']} 
+            title="Emergency Support" 
+            id="emergency-support" 
+            isOpen={openSections['emergency-support']} 
             onToggle={toggleSection}
             icon="🚨"
           >
@@ -577,7 +577,7 @@ const RequestForm: React.FC<{ type: string, onSubmit: (data: any) => void }> = (
               <input className={inputClass} placeholder="Specify your custom reason..." required onChange={e => setData({...data, customReason: e.target.value})} />
             </motion.div>
           )}
-          <button className="w-full bg-blue-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]">Submit Change Protocol</button>
+          <button className="w-full bg-blue-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]">Submit Change Request</button>
         </form>
       );
     case 'OUT_PASS':
@@ -640,17 +640,17 @@ const RequestForm: React.FC<{ type: string, onSubmit: (data: any) => void }> = (
             <span>Estimated Billing</span>
             <span className="font-mono">₹{(Number(data.rooms || 0) * 1200).toLocaleString()}</span>
           </div>
-          <button className="w-full bg-blue-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]">Book Guest Node</button>
+          <button className="w-full bg-blue-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]">Book Guest Room</button>
         </form>
       );
     default:
       return (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className={labelClass}>Protocol Description</label>
+            <label className={labelClass}>Description</label>
             <textarea className={inputClass} rows={4} placeholder="Enter full details for administrative review..." required onChange={e => setData({...data, raw: e.target.value})} />
           </div>
-          <button className="w-full bg-blue-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]">Submit Protocol</button>
+          <button className="w-full bg-blue-600 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md active:scale-[0.98]">Submit Request</button>
         </form>
       );
   }

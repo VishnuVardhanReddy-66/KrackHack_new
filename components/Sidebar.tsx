@@ -1,23 +1,35 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
   currentRole: UserRole;
   activeTab: string;
-  onTabChange: (id: string) => void;
+  onTabChange: (id: string, subSection?: any) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentRole, activeTab, onTabChange }) => {
+  const [isMoreOpen, setIsMoreOpen] = useState(activeTab === 'hub');
+
   const menuItems = [
     { id: 'dashboard', label: 'Campus Home', icon: '🏛️' },
-    { id: 'vault', label: 'Academic Vault', icon: '📂', roles: [UserRole.STUDENT, UserRole.FACULTY] },
+    { id: 'vault', label: 'Academic Vault', icon: '📂', roles: [UserRole.STUDENT, UserRole.FACULTY, UserRole.ADMIN] },
     { id: 'hostel-mess', label: 'Mess & Hostel', icon: '🍱', roles: [UserRole.STUDENT] },
-    { id: 'programming-hub', label: 'Arena Hub', icon: '💻', roles: [UserRole.STUDENT] },
+    { id: 'programming-hub', label: 'Programming', icon: '💻', roles: [UserRole.STUDENT] },
     { id: 'opportunities', label: 'Career Hub', icon: '💼', roles: [UserRole.STUDENT] },
-    { id: 'grievances', label: 'Help Center', icon: '🛡️' },
-    { id: 'hub', label: 'Campus Pulse', icon: '🛰️' },
+    { id: 'announcements', label: 'Announcements', icon: '📢', roles: [UserRole.FACULTY, UserRole.ADMIN] },
+    { id: 'grievances', label: 'Grievance Center', icon: '🛡️' },
+    { 
+      id: 'hub', 
+      label: 'More', 
+      icon: '✨', 
+      hasSubmenu: true,
+      roles: [UserRole.STUDENT],
+      subItems: [
+        { id: 'ANNOUNCEMENTS', label: 'Announcements', icon: '📢' },
+        { id: 'CARPOOL', label: 'Carpool', icon: '🚗' }
+      ]
+    },
     { id: 'admin-panel', label: 'Admin Hub', icon: '⚙️', roles: [UserRole.ADMIN] },
   ];
 
@@ -40,6 +52,58 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentRole, activeTab, onTabC
           .filter(item => !item.roles || item.roles.includes(currentRole))
           .map((item) => {
             const isActive = activeTab === item.id;
+            
+            if (item.hasSubmenu) {
+              return (
+                <div key={item.id} className="space-y-1">
+                  <button
+                    onClick={() => {
+                      setIsMoreOpen(!isMoreOpen);
+                      onTabChange('hub');
+                    }}
+                    className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl transition-all relative group ${
+                      isActive 
+                        ? 'bg-purple-600/20 text-white' 
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{item.icon}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                    </div>
+                    <motion.span 
+                      animate={{ rotate: isMoreOpen ? 180 : 0 }}
+                      className="text-[10px] opacity-40"
+                    >
+                      ▼
+                    </motion.span>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {isMoreOpen && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden bg-black/20 rounded-2xl ml-2 mr-2"
+                      >
+                        {item.subItems?.map(sub => (
+                          <button
+                            key={sub.id}
+                            onClick={() => onTabChange('hub', sub.id)}
+                            className="w-full flex items-center gap-3 px-8 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left"
+                          >
+                            <span className="text-sm">{sub.icon}</span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest">{sub.label}</span>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            }
+
             return (
               <button
                 key={item.id}

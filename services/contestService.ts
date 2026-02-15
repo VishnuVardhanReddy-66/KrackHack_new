@@ -3,152 +3,70 @@ import { Contest } from '../types';
 
 /**
  * Generates dynamic mock data when the external API is unreachable.
- * Updated to provide a rich set of contests for a full calendar view.
+ * Populated with a rich set of contests across the entire year 2026.
  */
 const getFallbackContests = (): any[] => {
   const now = new Date();
   const year = 2026;
-  const month = 2; // March (0-indexed)
   
-  const createDate = (day: number, hour: number) => new Date(year, month, day, hour).toISOString();
+  // Specifically set a Codeforces contest for 8:35 PM (20:35) on the current date
+  const codeforcesToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 35, 0);
 
-  return [
+  const createDate = (m: number, d: number, h: number) => {
+    return new Date(year, m - 1, d, h).toISOString();
+  };
+
+  const contests = [
+    // Today's Spotlight Contest
     {
-      name: "AEGIS Protocol Internal Sprint",
+      name: "Codeforces Round #1001 (Div. 1 + Div. 2)",
       url: "https://codeforces.com/contests",
-      start_time: new Date(now.getTime() + 1000 * 60 * 60 * 2.5).toISOString(),
-      end_time: new Date(now.getTime() + 1000 * 60 * 60 * 4.5).toISOString(),
+      start_time: codeforcesToday.toISOString(),
+      end_time: new Date(codeforcesToday.getTime() + 1000 * 60 * 60 * 2).toISOString(),
       duration: "7200",
-      site: "IIT Mandi Node",
+      site: "Codeforces",
       status: "BEFORE"
     },
-    {
-      name: "Codeforces Round #999 (Div. 2)",
-      url: "https://codeforces.com/contests",
-      start_time: createDate(5, 18),
-      end_time: createDate(5, 20),
-      duration: "7200",
-      site: "CodeForces",
-      status: "BEFORE"
-    },
-    {
-      name: "AtCoder Regular Contest 180",
-      url: "https://atcoder.jp/",
-      start_time: createDate(8, 17),
-      end_time: createDate(8, 19),
-      duration: "7200",
-      site: "AtCoder",
-      status: "BEFORE"
-    },
-    {
-      name: "LeetCode Weekly Contest 436",
-      url: "https://leetcode.com/contest/",
-      start_time: createDate(12, 8),
-      end_time: createDate(12, 10),
-      duration: "7200",
-      site: "LeetCode",
-      status: "BEFORE"
-    },
-    {
-      name: "Google Kickstart Round A",
-      url: "https://codingcompetitions.withgoogle.com/",
-      start_time: createDate(15, 14),
-      end_time: createDate(15, 17),
-      duration: "10800",
-      site: "Google",
-      status: "BEFORE"
-    },
-    {
-      name: "CodeChef Starters 170 (Rated)",
-      url: "https://www.codechef.com/contests",
-      start_time: createDate(18, 20),
-      end_time: createDate(18, 23),
-      duration: "10800",
-      site: "CodeChef",
-      status: "BEFORE"
-    },
-    {
-      name: "TopCoder SRM 850",
-      url: "https://www.topcoder.com/challenges",
-      start_time: createDate(22, 19),
-      end_time: createDate(22, 21),
-      duration: "7200",
-      site: "TopCoder",
-      status: "BEFORE"
-    },
-    {
-      name: "CSES Programming League",
-      url: "https://cses.fi/",
-      start_time: createDate(25, 10),
-      end_time: createDate(25, 13),
-      duration: "10800",
-      site: "CSES",
-      status: "BEFORE"
-    },
-    {
-      name: "BinarySearch Biohazard Contest",
-      url: "https://binarysearch.com/",
-      start_time: createDate(28, 21),
-      end_time: createDate(28, 23),
-      duration: "7200",
-      site: "BinarySearch",
-      status: "BEFORE"
-    },
-    {
-      name: "Hackerrank University CodeSprint",
-      url: "https://www.hackerrank.com/",
-      start_time: createDate(30, 15),
-      end_time: createDate(30, 18),
-      duration: "10800",
-      site: "HackerRank",
-      status: "BEFORE"
-    },
-    {
-      name: "Competitive Programming Node #1",
-      url: "#",
-      start_time: createDate(2, 20),
-      end_time: createDate(2, 22),
-      duration: "7200",
-      site: "Kattis",
-      status: "BEFORE"
-    },
-    {
-      name: "Global Marathon 2026",
-      url: "#",
-      start_time: createDate(10, 9),
-      end_time: createDate(10, 21),
-      duration: "43200",
-      site: "Hackerrank",
-      status: "BEFORE"
-    },
-    {
-      name: "Frontend Algorithms Cup",
-      url: "#",
-      start_time: createDate(20, 19),
-      end_time: createDate(20, 21),
-      duration: "7200",
-      site: "LeetCode",
-      status: "BEFORE"
-    },
-    {
-      name: "Backend Optimization Sprint",
-      url: "#",
-      start_time: createDate(24, 18),
-      end_time: createDate(24, 20),
-      duration: "7200",
-      site: "CodeForces",
-      status: "BEFORE"
-    },
-    {
-      name: "Night Owls Coding #12",
-      url: "#",
-      start_time: createDate(27, 23),
-      end_time: createDate(28, 2),
-      duration: "10800",
-      site: "AtCoder",
-      status: "BEFORE"
-    }
+    // January
+    { name: "CodeChef Starters 170", url: "https://codechef.com", start_time: createDate(1, 10, 20), end_time: createDate(1, 10, 23), duration: "10800", site: "CodeChef" },
+    { name: "Codeforces Round #1005", url: "https://codeforces.com", start_time: createDate(1, 24, 19), end_time: createDate(1, 24, 21), duration: "7200", site: "Codeforces" },
+    // February
+    { name: "AtCoder Beginner Contest 360", url: "https://atcoder.jp", start_time: createDate(2, 7, 17), end_time: createDate(2, 7, 19), duration: "7200", site: "AtCoder" },
+    { name: "LeetCode Weekly Contest 410", url: "https://leetcode.com", start_time: createDate(2, 22, 8), end_time: createDate(2, 22, 10), duration: "7200", site: "LeetCode" },
+    // March
+    { name: "Codeforces Round #1010", url: "https://codeforces.com", start_time: createDate(3, 10, 19), end_time: createDate(3, 10, 21), duration: "7200", site: "Codeforces" },
+    { name: "CodeChef Starters 180", url: "https://codechef.com", start_time: createDate(3, 18, 20), end_time: createDate(3, 18, 23), duration: "10800", site: "CodeChef" },
+    { name: "AtCoder Regular Contest 185", url: "https://atcoder.jp", start_time: createDate(3, 29, 17), end_time: createDate(3, 29, 19), duration: "7200", site: "AtCoder" },
+    // April
+    { name: "LeetCode Biweekly Contest 135", url: "https://leetcode.com", start_time: createDate(4, 11, 20), end_time: createDate(4, 11, 22), duration: "7200", site: "LeetCode" },
+    { name: "Codeforces Round #1020", url: "https://codeforces.com", start_time: createDate(4, 25, 19), end_time: createDate(4, 25, 21), duration: "7200", site: "Codeforces" },
+    // May
+    { name: "CodeChef Starters 190", url: "https://codechef.com", start_time: createDate(5, 13, 20), end_time: createDate(5, 13, 23), duration: "10800", site: "CodeChef" },
+    { name: "AtCoder Beginner Contest 370", url: "https://atcoder.jp", start_time: createDate(5, 24, 17), end_time: createDate(5, 24, 19), duration: "7200", site: "AtCoder" },
+    // June
+    { name: "Google Kickstart Round B", url: "https://codingcompetitions.withgoogle.com", start_time: createDate(6, 7, 14), end_time: createDate(6, 7, 17), duration: "10800", site: "Google" },
+    { name: "Codeforces Round #1035", url: "https://codeforces.com", start_time: createDate(6, 21, 19), end_time: createDate(6, 21, 21), duration: "7200", site: "Codeforces" },
+    // July
+    { name: "CodeChef Starters 200", url: "https://codechef.com", start_time: createDate(7, 15, 20), end_time: createDate(7, 15, 23), duration: "10800", site: "CodeChef" },
+    { name: "AtCoder Regular Contest 190", url: "https://atcoder.jp", start_time: createDate(7, 26, 17), end_time: createDate(7, 26, 19), duration: "7200", site: "AtCoder" },
+    // August
+    { name: "LeetCode Weekly Contest 440", url: "https://leetcode.com", start_time: createDate(8, 9, 8), end_time: createDate(8, 9, 10), duration: "7200", site: "LeetCode" },
+    { name: "Codeforces Global Round 30", url: "https://codeforces.com", start_time: createDate(8, 23, 19), end_time: createDate(8, 23, 22), duration: "10800", site: "Codeforces" },
+    // September
+    { name: "Google Farewell Round Final", url: "https://codingcompetitions.withgoogle.com", start_time: createDate(9, 6, 10), end_time: createDate(9, 6, 14), duration: "14400", site: "Google" },
+    { name: "CodeChef Starters 210", url: "https://codechef.com", start_time: createDate(9, 20, 20), end_time: createDate(9, 20, 23), duration: "10800", site: "CodeChef" },
+    // October
+    { name: "AtCoder Beginner Contest 380", url: "https://atcoder.jp", start_time: createDate(10, 4, 17), end_time: createDate(10, 4, 19), duration: "7200", site: "AtCoder" },
+    { name: "Codeforces Round #1050", url: "https://codeforces.com", start_time: createDate(10, 18, 19), end_time: createDate(10, 18, 21), duration: "7200", site: "Codeforces" },
+    // November
+    { name: "LeetCode Biweekly Contest 145", url: "https://leetcode.com", start_time: createDate(11, 7, 20), end_time: createDate(11, 7, 22), duration: "7200", site: "LeetCode" },
+    { name: "Meta Hacker Cup Round 1", url: "https://meta.com", start_time: createDate(11, 22, 10), end_time: createDate(11, 23, 10), duration: "86400", site: "Meta" },
+    // December
+    { name: "CodeChef Starters 230", url: "https://codechef.com", start_time: createDate(12, 6, 20), end_time: createDate(12, 6, 23), duration: "10800", site: "CodeChef" },
+    { name: "Google Code Jam Finals", url: "https://google.com", start_time: createDate(12, 20, 10), end_time: createDate(12, 20, 14), duration: "14400", site: "Google" },
   ];
+
+  return contests;
 };
 
 export const contestService = {

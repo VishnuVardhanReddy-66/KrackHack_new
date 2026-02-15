@@ -1,4 +1,3 @@
-
 export enum UserRole {
   STUDENT = 'STUDENT',
   FACULTY = 'FACULTY',
@@ -22,6 +21,8 @@ export interface User {
   role: UserRole;
   department: string;
   avatar?: string;
+  semester?: number;
+  teachingSubjectPrefix?: string; // e.g. 'CS', 'MA', 'PH'
 }
 
 export enum GrievanceStatus {
@@ -33,23 +34,40 @@ export enum GrievanceStatus {
 
 export interface Grievance {
   id: string;
-  title: string;
-  description: string;
   category: string;
+  description: string;
   status: GrievanceStatus;
-  submittedBy: string;
-  submittedDate: string;
-  resolution?: string;
+  submittedBy: string; // User ID
+  date: string;
+  adminComment?: string; // New: Direct reply from admin
 }
 
-export interface UserCourse {
+export interface Announcement {
   id: string;
-  code: string;
-  name: string;
-  instructor: string;
-  credits: number;
-  materialsCount: number;
-  progress?: number;
+  title: string;
+  author: string;
+  date: string;
+  content: string;
+  elaboration: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  targetAudience: 'GLOBAL' | 'STUDENT' | 'FACULTY';
+  targetSemester?: number; 
+  targetUserId?: string;   
+  courseCode?: string;     
+}
+
+export interface Carpool {
+  id: string;
+  author: string;
+  from: string;
+  to: string;
+  time: string;
+  carType: string;
+  joined: number;
+  max: number;
+  totalPrice: number;
+  status: 'OPEN' | 'FILLED';
+  joinedUserIds: string[]; // Track who joined
 }
 
 export interface Course {
@@ -60,6 +78,8 @@ export interface Course {
   credits: number;
   materialsCount: number;
   progress?: number;
+  semester: number;
+  grade?: string; // For GPA calculation
 }
 
 export interface Opportunity {
@@ -76,9 +96,9 @@ export interface Contest {
   id: string;
   platform: string;
   title: string;
-  startTime: string; // Formatted string
-  rawStartTime: string; // ISO string
-  endTime: string; // ISO string
+  startTime: string; 
+  rawStartTime: string; 
+  endTime: string; 
   duration: string;
   link: string;
   status: 'UPCOMING' | 'LIVE' | 'FINISHED';
@@ -98,4 +118,5 @@ export interface ComplaintHistoryItem {
   description: string;
   status: string;
   date: string;
+  adminComment?: string;
 }

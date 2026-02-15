@@ -8,7 +8,7 @@ interface LayoutProps {
   children: React.ReactNode;
   currentRole: UserRole;
   activeTab: string;
-  onTabChange: (id: string) => void;
+  onTabChange: (id: string, subSection?: any) => void;
   onLogout: () => void;
   activeSubTab: string;
   onSubTabChange: (id: string) => void;
@@ -23,7 +23,7 @@ export const Layout: React.FC<LayoutProps> = ({
   activeSubTab,
   onSubTabChange
 }) => {
-  const subTabs = ['General', 'Coursework', 'Exams', 'Campus Life'];
+  const subTabs = ['General', 'Exams'];
 
   return (
     <div className="flex h-screen w-full overflow-hidden selection:bg-purple-500/10">
@@ -38,18 +38,16 @@ export const Layout: React.FC<LayoutProps> = ({
         <header className="h-16 glass-nav px-12 flex items-center justify-between z-50 sticky top-0">
           <div className="flex items-center gap-8">
             <h2 className="text-[11px] font-black text-[#242424] tracking-[0.2em] uppercase">
-              Student Information System / <span className="text-purple-600">{activeTab.replace('-', ' ')}</span>
+              Student Information System / <span className="text-purple-600">{
+                activeTab === 'hub' ? 'MORE' : 
+                activeTab === 'announcements' ? 'ANNOUNCEMENTS' :
+                activeTab === 'programming-hub' ? 'PROGRAMMING' :
+                activeTab.replace('-', ' ')
+              }</span>
             </h2>
           </div>
           
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-[#616161]">
-              <button className="text-lg hover:text-black transition-colors">🔍</button>
-              <button className="text-lg hover:text-black transition-colors relative">
-                🔔
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-purple-600 rounded-full border-2 border-white" />
-              </button>
-            </div>
             <button 
               onClick={onLogout}
               className="btn-secondary !py-2 !px-4 text-[10px] uppercase tracking-widest"
@@ -101,7 +99,7 @@ export const Layout: React.FC<LayoutProps> = ({
           
           <footer className="py-24 px-12 text-center border-t border-black/5 mt-32">
             <p className="text-[9px] font-bold tracking-[0.4em] uppercase font-mono text-[#86868b]">
-              AEGIS PROTOCOL • UNIVERSITY DIGITAL ECOSYSTEM • IIT MANDI
+              AEGIS ECOSYSTEM • UNIVERSITY DIGITAL HUB • IIT MANDI
             </p>
           </footer>
         </div>

@@ -1,122 +1,166 @@
 
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LoginProps {
-  onLogin: (role: UserRole, id: string) => void;
+  onLogin: (role: UserRole, id: string, semester?: number) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.STUDENT);
-  const [idValue, setIdValue] = useState('');
+  const [role, setRole] = useState<UserRole>(UserRole.STUDENT);
+  const [semesterCycle, setSemesterCycle] = useState<'ODD' | 'EVEN'>('ODD');
+  const [rollNumber, setRollNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (idValue.trim()) {
-      onLogin(selectedRole, idValue);
-    }
-  };
+    setError(null);
+    const id = rollNumber.trim();
 
-  const getLabel = () => {
-    switch (selectedRole) {
-      case UserRole.STUDENT: return 'Roll Number';
-      case UserRole.FACULTY: return 'Faculty ID';
-      case UserRole.ADMIN: return 'Admin ID';
-      default: return 'ID';
+    if (role === UserRole.ADMIN) {
+      if (id === 'Error' && password === '404') {
+        onLogin(UserRole.ADMIN, 'Error');
+      } else {
+        setError('Unauthorized Admin Access. Invalid system key.');
+      }
+      return;
+    }
+
+    if (role === UserRole.FACULTY) {
+      const facultyRegex = /^f(\d{3})$/i;
+      const match = id.match(facultyRegex);
+      if (match) {
+        const num = parseInt(match[1]);
+        if (num >= 1 && num <= 100) {
+          if (password === match[1]) {
+            onLogin(UserRole.FACULTY, id.toUpperCase());
+          } else {
+            setError('Incorrect password. Use the 3-digit suffix (e.g., 001).');
+          }
+        } else {
+          setError('Faculty IDs range from f001 to f100.');
+        }
+      } else {
+        setError('Invalid Faculty ID format. Use f001-f100.');
+      }
+      return;
+    }
+
+    if (role === UserRole.STUDENT) {
+      const normalizedRoll = id.toLowerCase();
+      const studentRegex = /^b2([2345])(\d{3})$/;
+      const match = normalizedRoll.match(studentRegex);
+
+      if (!match) {
+        setError('Invalid Roll Number. Use b2[Year][001-500].');
+        return;
+      }
+
+      const yearDigit = match[1];
+      const sequence = match[2];
+      if (password !== sequence) {
+        setError('Incorrect password. Use the last 3 digits of your ID.');
+        return;
+      }
+
+      const semMapOdd: Record<string, number> = { '5': 1, '4': 3, '3': 5, '2': 7 };
+      const semMapEven: Record<string, number> = { '5': 2, '4': 4, '3': 6, '2': 8 };
+      const mappedSemester = semesterCycle === 'ODD' ? semMapOdd[yearDigit] : semMapEven[yearDigit];
+      
+      onLogin(UserRole.STUDENT, normalizedRoll.toUpperCase(), mappedSemester);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white relative overflow-hidden">
-      {/* Mesh Decor */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-purple-100 rounded-full blur-[150px] opacity-40 animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-100 rounded-full blur-[150px] opacity-40 animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] bg-pink-100 rounded-full blur-[120px] opacity-30 animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-
-      <div className="w-full max-w-md px-8 relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.28, 0.11, 0.32, 1] }}
-          className="bg-white/70 backdrop-blur-2xl p-12 rounded-[40px] border border-white/60 shadow-[0_20px_80px_rgba(0,0,0,0.06)]"
-        >
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#5b5fc7] rounded-2xl shadow-xl mb-6">
-              <span className="text-3xl">🛡️</span>
-            </div>
-            <h1 className="text-3xl font-black text-[#242424] tracking-tight">AEGIS Protocol</h1>
-            <p className="text-[#616161] text-xs font-bold mt-2 uppercase tracking-[0.3em]">Access Authorized Node</p>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#f5f5f7]">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md bg-white rounded-[48px] shadow-2xl p-10 border border-slate-100"
+      >
+        <div className="text-center space-y-4 mb-10">
+          <div className="w-20 h-20 bg-purple-600 rounded-[28px] flex items-center justify-center text-4xl mx-auto shadow-xl shadow-purple-200">
+            🛡️
           </div>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight uppercase">AEGIS Protocol</h1>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Multi-Factor Secure Node Access</p>
+        </div>
 
-          <div className="flex p-1 bg-black/5 rounded-xl mb-10">
-            {(Object.keys(UserRole) as Array<keyof typeof UserRole>).map((role) => (
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+            {(Object.values(UserRole)).map((r) => (
               <button
-                key={role}
-                onClick={() => setSelectedRole(UserRole[role])}
-                className={`flex-1 py-2.5 text-[10px] font-black rounded-lg transition-all uppercase tracking-widest ${
-                  selectedRole === UserRole[role]
-                    ? 'bg-white text-[#242424] shadow-sm'
-                    : 'text-[#616161] hover:text-[#242424]'
+                key={r}
+                type="button"
+                onClick={() => { setRole(r); setError(null); }}
+                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  role === r ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                {role}
+                {r}
               </button>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black text-[#616161] uppercase tracking-widest ml-1">
-                {getLabel()}
-              </label>
-              <input
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity Tag</label>
+              <input 
+                required
                 type="text"
-                required
-                value={idValue}
-                onChange={(e) => setIdValue(e.target.value)}
-                placeholder="Enter identifier..."
-                className="w-full bg-white border border-black/5 rounded-xl px-6 py-4 text-[#242424] placeholder:text-[#d2d2d7] focus:ring-2 focus:ring-purple-500/20 outline-none transition-all font-bold"
+                value={rollNumber}
+                onChange={(e) => { setRollNumber(e.target.value); setError(null); }}
+                placeholder={role === UserRole.STUDENT ? "b25001" : role === UserRole.FACULTY ? "f001" : "Admin ID"}
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-[10px] font-black text-[#616161] uppercase tracking-widest ml-1">
-                Security Token
-              </label>
-              <input
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Cipher</label>
+              <input 
+                required
                 type="password"
-                required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(null); }}
                 placeholder="••••••••"
-                className="w-full bg-white border border-black/5 rounded-xl px-6 py-4 text-[#242424] placeholder:text-[#d2d2d7] focus:ring-2 focus:ring-purple-500/20 outline-none transition-all font-bold"
+                className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-purple-500 outline-none"
               />
             </div>
-
-            <button
-              type="submit"
-              className="btn-primary w-full py-5 text-xs uppercase tracking-[0.2em]"
-            >
-              Authorize Session
-            </button>
-          </form>
-
-          <div className="mt-12 text-center">
-            <p className="text-[#616161] text-[9px] uppercase tracking-[0.4em] font-mono">
-              ENCRYPTED SECURE CHANNEL ALPHA
-            </p>
           </div>
-        </motion.div>
-        
-        <p className="text-center text-[#86868b] text-[10px] mt-10 leading-relaxed font-medium">
-          Authorized personnel only. Infrastructure managed by AEGIS Core. <br />
-          Network activity is logged for security auditing.
-        </p>
-      </div>
+
+          {role === UserRole.STUDENT && (
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Cycle Sync</label>
+              <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
+                {(['ODD', 'EVEN'] as const).map(cycle => (
+                  <button
+                    key={cycle}
+                    type="button"
+                    onClick={() => setSemesterCycle(cycle)}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      semesterCycle === cycle ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    {cycle}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <AnimatePresence>
+            {error && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="bg-red-50 p-4 rounded-2xl border border-red-100">
+                <p className="text-[10px] text-red-600 font-black uppercase tracking-widest text-center">{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button type="submit" className="w-full bg-purple-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-purple-600/20 active:scale-[0.98]">Authorize ❯</button>
+        </form>
+      </motion.div>
     </div>
   );
 };

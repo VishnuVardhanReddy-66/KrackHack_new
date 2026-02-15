@@ -10,6 +10,10 @@ export const COLORS = {
   warning: '#f59e0b', // amber-500
 };
 
+// Available prefixes: CS, MA, PH, EE, ME, CY, EC
+const SUBJECT_PREFIXES = ['CS', 'MA', 'PH', 'EE', 'ME', 'CY', 'EC'];
+const randomPrefix = SUBJECT_PREFIXES[Math.floor(Math.random() * SUBJECT_PREFIXES.length)];
+
 export const MOCK_USER: Record<string, any> = {
   STUDENT: {
     id: 's-001',
@@ -25,6 +29,7 @@ export const MOCK_USER: Record<string, any> = {
     email: 's.smith@campus.edu',
     role: 'FACULTY',
     department: 'Software Engineering',
+    teachingSubjectPrefix: randomPrefix,
     avatar: 'https://picsum.photos/seed/sarah/100/100'
   },
   ADMIN: {

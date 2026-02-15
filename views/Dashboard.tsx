@@ -20,7 +20,7 @@ const FeatureCard: React.FC<{ icon: string, title: string, desc: string }> = ({ 
     <div className="text-4xl">{icon}</div>
     <div className="space-y-2">
       <h4 className="text-lg font-extrabold text-[#242424] tracking-tight">{title}</h4>
-      <p className="text-sm text-[#616161] leading-relaxed font-medium">{desc}</p>
+      <h5 className="text-sm text-[#616161] leading-relaxed font-medium">{desc}</h5>
     </div>
   </motion.div>
 );
@@ -55,7 +55,6 @@ const ACADEMIC_EVENTS = [
 
 const CampusCalendar: React.FC = () => {
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
-  // Defaulting to March 2026 as shown in the middle of the provided calendar
   const [currentDate, setCurrentDate] = useState(new Date(2026, 2, 1));
 
   const nextDate = () => {
@@ -212,7 +211,7 @@ const CampusCalendar: React.FC = () => {
                          <div key={ei} className={`p-5 rounded-2xl border shadow-sm flex flex-col gap-2 group transition-all ${getEventStyle(e.type)}`}>
                             <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">{e.type}</p>
                             <h4 className="text-lg font-black tracking-tight">{e.title}</h4>
-                            <p className="text-[10px] font-bold opacity-60">Full Day Event • Campus Node Kamand</p>
+                            <p className="text-[10px] font-bold opacity-60">Full Day Event • Campus Hub Kamand</p>
                          </div>
                        )) : (
                          <p className="text-[10px] text-slate-400 font-medium italic mt-2">No scheduled academic activity.</p>
@@ -281,7 +280,7 @@ const FALLBACK_CAMPUS_IMAGE = "https://images.unsplash.com/photo-1464822759023-f
 interface DashboardProps {
   role: UserRole;
   subTab: string;
-  onNavigateToHub?: (section: 'ANNOUNCEMENTS' | 'CARPOOL' | 'MAP') => void;
+  onNavigateToHub?: (section: 'ANNOUNCEMENTS' | 'CARPOOL') => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateToHub }) => {
@@ -307,36 +306,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
 
   const renderSubContent = () => {
     switch (subTab) {
-      case 'coursework':
-        return (
-          <div className="px-12 py-20 space-y-12">
-            <h2 className="text-3xl font-black text-[#1a1a1a]">Course Summary</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                { name: 'Introduction to Algorithms', code: 'CS201', progress: 85, color: 'bg-purple-600' },
-                { name: 'Microprocessor Systems', code: 'CS202', progress: 60, color: 'bg-blue-600' },
-                { name: 'Discrete Mathematics', code: 'MA102', progress: 92, color: 'bg-pink-600' },
-              ].map(course => (
-                <div key={course.code} className="bento-card p-8 space-y-6">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest">{course.code}</span>
-                    <span className="text-xs font-bold text-slate-400">Semester 4</span>
-                  </div>
-                  <h4 className="text-lg font-bold">{course.name}</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                      <span>Completion</span>
-                      <span>{course.progress}%</span>
-                    </div>
-                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                      <div className={`h-full ${course.color}`} style={{ width: `${course.progress}%` }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
       case 'exams':
         return (
           <div className="px-12 py-20 space-y-12">
@@ -353,9 +322,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
                 </thead>
                 <tbody className="divide-y divide-black/5 text-sm">
                   {[
-                    { date: '12 Nov 2024', code: 'CS201', name: 'Algorithms', venue: 'LT-1, North Campus' },
-                    { date: '15 Nov 2024', code: 'CS202', name: 'Microprocessors', venue: 'LT-2, North Campus' },
-                    { date: '18 Nov 2024', code: 'MA102', name: 'Discrete Math', venue: 'Main Auditorium' },
+                    { date: '02 Mar 2026', code: 'CS301', name: 'Database Management', venue: 'LT-1, North Campus' },
+                    { date: '04 Mar 2026', code: 'CS302', name: 'Software Engineering', venue: 'LT-2, North Campus' },
+                    { date: '06 Mar 2026', code: 'CS303', name: 'Theory of Computation', venue: 'LT-1, North Campus' },
+                    { date: '09 Mar 2026', code: 'HS201', name: 'Professional Ethics', venue: 'Main Auditorium' },
+                    { date: '11 Mar 2026', code: 'CS351', name: 'Artificial Intelligence', venue: 'CS Lab 1' },
+                    { date: '13 Mar 2026', code: 'CS352', name: 'Web Technologies', venue: 'CS Lab 2' },
+                    { date: '16 Mar 2026', code: 'MA201', name: 'Numerical Methods', venue: 'LT-1, North Campus' },
+                    { date: '18 Mar 2026', code: 'EC210', name: 'Signal Processing', venue: 'Main Auditorium' },
                   ].map((exam, i) => (
                     <tr key={i} className="hover:bg-slate-50 transition-colors">
                       <td className="px-10 py-6 font-bold">{exam.date}</td>
@@ -369,46 +343,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
             </div>
           </div>
         );
-      case 'campus life':
-        return (
-          <div className="px-12 py-20 space-y-12">
-            <h2 className="text-4xl font-black text-[#1a1a1a]">Campus Life</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <motion.div 
-                whileHover={{ y: -5 }}
-                className="bento-card p-10 bg-white"
-              >
-                <span className="text-4xl mb-4 block">🚗</span>
-                <h4 className="text-xl font-bold mb-2">AEGIS Carpool</h4>
-                <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">Need a ride to Mandi town or the Railway Station? Connect with fellow students and save on fares.</p>
-                <button 
-                  onClick={() => onNavigateToHub?.('CARPOOL')}
-                  className="bg-[#5b5fc7] text-white px-8 py-3 rounded-lg text-xs font-bold shadow-md hover:bg-[#4b4fa3] transition-all"
-                >
-                  Find a Pool
-                </button>
-              </motion.div>
-              <motion.div 
-                whileHover={{ y: -5 }}
-                className="bento-card p-10 bg-[#f8faff]"
-              >
-                <span className="text-4xl mb-4 block">🗺️</span>
-                <h4 className="text-xl font-bold mb-2">Interactive Map</h4>
-                <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">Navigate the North and South campuses with our precise 3D building layouts and room finder.</p>
-                <button 
-                  onClick={() => onNavigateToHub?.('MAP')}
-                  className="border border-[#5b5fc7] text-[#5b5fc7] px-8 py-3 rounded-lg text-xs font-bold hover:bg-[#5b5fc7]/5 transition-all"
-                >
-                  Open Map
-                </button>
-              </motion.div>
-            </div>
-          </div>
-        );
       default:
         return (
           <div className="bg-white">
-            {/* Optimized Institutional Header with specific typography and alignment */}
             <div className="bg-white border-b border-slate-200 shadow-[0_4px_12px_rgba(0,0,0,0.04)] px-6 py-8">
               <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
                 <div className="w-[60px] sm:w-[80px] shrink-0 flex items-center justify-center">
@@ -494,7 +431,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
                 </div>
                 
                 <div className="w-full lg:w-96 space-y-8">
-                  <button className="w-full bg-[#FFB81C] text-[#002147] py-6 px-8 rounded-sm font-black text-base uppercase tracking-[0.25em] shadow-xl hover:bg-[#e0a21a] hover:-translate-y-1 transition-all">
+                  <button className="w-full bg-[#FFB81C] text-[#002147] py-6 px-8 rounded-sm font-black text-base uppercase tracking-[0.2em] shadow-xl hover:bg-[#e0a21a] hover:-translate-y-1 transition-all">
                     DIRECTOR'S OFFICE
                   </button>
                   <div className="bento-card p-10 border-l-[12px] border-l-[#0070c0] bg-[#f8f9fa] shadow-lg">
@@ -506,14 +443,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
               </div>
             </section>
 
-            {/* Academic Calendar Section */}
+            {/* Academic Hub Section */}
             <section className="px-12 py-32 border-t border-black/5 bg-[#fdfdfd]">
                <div className="flex flex-col gap-16">
                 <div>
                    <p className="text-[#5b5fc7] font-black text-[12px] uppercase tracking-[0.5em] mb-4">University Timeline</p>
-                   <h2 className="text-5xl font-black text-[#1a1a1a] tracking-tight">Official Academic Node</h2>
+                   <h2 className="text-5xl font-black text-[#1a1a1a] tracking-tight">Official Academic Hub</h2>
                    <p className="text-slate-500 text-sm mt-4 font-medium max-w-2xl italic leading-relaxed">
-                     The official 2026 Academic Calendar for IIT Mandi. This synchronized temporal node manages teaching days, examination windows, and official residential breaks.
+                     The official 2026 Academic Calendar for IIT Mandi. This synchronized temporal hub manages teaching days, examination windows, and official residential breaks.
                    </p>
                 </div>
                 <CampusCalendar />
@@ -524,13 +461,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ role, subTab, onNavigateTo
                <div className="flex flex-col gap-16">
                 <div>
                    <p className="text-purple-600 font-black text-[12px] uppercase tracking-[0.5em] mb-4">Ecosystem Services</p>
-                   <h2 className="text-5xl font-black text-[#1a1a1a] tracking-tight">Unified Digital Protocol</h2>
+                   <h2 className="text-5xl font-black text-[#1a1a1a] tracking-tight">Unified Digital Hub</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                   <FeatureCard 
                     icon="📂" 
                     title="Academic Vault" 
-                    desc="Unified access to your transcripts and course records in a secure digital node with instant verification." 
+                    desc="Unified access to your transcripts and course records in a secure digital hub with instant verification." 
                   />
                   <FeatureCard 
                     icon="🍱" 
