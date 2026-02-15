@@ -8,10 +8,12 @@ for faculty:-
 eg.,
 f001 - name 
 pass - 001
+
 for admin:-
 only one account:-
 name - Error
 pass - 404
+
 🏛 Overview
 
 AEGIS is a full-stack web ecosystem built for KrackHack under The AEGIS Protocol challenge.
