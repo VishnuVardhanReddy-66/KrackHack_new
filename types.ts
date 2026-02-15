@@ -66,7 +66,7 @@ export interface Opportunity {
   id: string;
   title: string;
   company: string;
-  type: 'INTERNSHIP' | 'RESEARCH' | 'VOLUNTEER';
+  type: 'INTERNSHIP' | 'RESEARCH' | 'JOB' | 'VOLUNTEER';
   location: string;
   deadline: string;
   tags: string[];
@@ -82,4 +82,20 @@ export interface Contest {
   duration: string;
   link: string;
   status: 'UPCOMING' | 'LIVE' | 'FINISHED';
+}
+
+export interface ResidentialRequest {
+  id: string;
+  type: 'ROOM_CHANGE' | 'LATE_PASS' | 'GUEST_BOOKING' | 'MESS_CHANGE' | 'OUT_PASS';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  date: string;
+  details: any;
+}
+
+export interface ComplaintHistoryItem {
+  id: string;
+  category: string;
+  description: string;
+  status: string;
+  date: string;
 }

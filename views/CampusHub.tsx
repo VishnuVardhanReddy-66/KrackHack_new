@@ -175,13 +175,13 @@ export const CampusHub: React.FC<CampusHubProps> = ({ initialSection = 'ANNOUNCE
 
               <div className="absolute top-10 right-10 bg-black/40 backdrop-blur-2xl px-8 py-4 rounded-full border border-white/10 flex items-center gap-4 shadow-2xl z-30">
                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-                 <span className="text-[11px] font-black text-white uppercase tracking-[0.25em]">IIT Mandi North Campus Active</span>
+                 <span className="text-[11px] font-black text-white uppercase tracking-[0.25em]">IIT Mandi Campus Active</span>
               </div>
 
               <div className="absolute top-10 left-10 z-30">
                 <div className="bg-purple-600/90 backdrop-blur-md px-6 py-3 rounded-lg border border-purple-400/30">
                   <p className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1">Satellite View</p>
-                  <h4 className="text-xl font-black text-white tracking-tight">Kamand Valley Node</h4>
+                  <h4 className="text-xl font-black text-white tracking-tight">Kamand Valley Campus</h4>
                 </div>
               </div>
            </div>

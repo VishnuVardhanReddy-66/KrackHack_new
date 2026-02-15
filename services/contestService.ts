@@ -3,16 +3,21 @@ import { Contest } from '../types';
 
 /**
  * Generates dynamic mock data when the external API is unreachable.
+ * Updated to provide a rich set of contests for a full calendar view.
  */
 const getFallbackContests = (): any[] => {
   const now = new Date();
+  const year = 2026;
+  const month = 2; // March (0-indexed)
   
+  const createDate = (day: number, hour: number) => new Date(year, month, day, hour).toISOString();
+
   return [
     {
       name: "AEGIS Protocol Internal Sprint",
       url: "https://codeforces.com/contests",
-      start_time: new Date(now.getTime() + 1000 * 60 * 60 * 1.5).toISOString(),
-      end_time: new Date(now.getTime() + 1000 * 60 * 60 * 3.5).toISOString(),
+      start_time: new Date(now.getTime() + 1000 * 60 * 60 * 2.5).toISOString(),
+      end_time: new Date(now.getTime() + 1000 * 60 * 60 * 4.5).toISOString(),
       duration: "7200",
       site: "IIT Mandi Node",
       status: "BEFORE"
@@ -20,36 +25,126 @@ const getFallbackContests = (): any[] => {
     {
       name: "Codeforces Round #999 (Div. 2)",
       url: "https://codeforces.com/contests",
-      start_time: new Date(now.getTime() + 1000 * 60 * 60 * 5).toISOString(),
-      end_time: new Date(now.getTime() + 1000 * 60 * 60 * 7).toISOString(),
+      start_time: createDate(5, 18),
+      end_time: createDate(5, 20),
       duration: "7200",
       site: "CodeForces",
       status: "BEFORE"
     },
     {
+      name: "AtCoder Regular Contest 180",
+      url: "https://atcoder.jp/",
+      start_time: createDate(8, 17),
+      end_time: createDate(8, 19),
+      duration: "7200",
+      site: "AtCoder",
+      status: "BEFORE"
+    },
+    {
       name: "LeetCode Weekly Contest 436",
       url: "https://leetcode.com/contest/",
-      start_time: new Date(now.getTime() + 1000 * 60 * 60 * 24 * 2).toISOString(),
-      end_time: new Date(now.getTime() + 1000 * 60 * 60 * (24 * 2 + 1.5)).toISOString(),
-      duration: "5400",
+      start_time: createDate(12, 8),
+      end_time: createDate(12, 10),
+      duration: "7200",
       site: "LeetCode",
+      status: "BEFORE"
+    },
+    {
+      name: "Google Kickstart Round A",
+      url: "https://codingcompetitions.withgoogle.com/",
+      start_time: createDate(15, 14),
+      end_time: createDate(15, 17),
+      duration: "10800",
+      site: "Google",
       status: "BEFORE"
     },
     {
       name: "CodeChef Starters 170 (Rated)",
       url: "https://www.codechef.com/contests",
-      start_time: new Date(now.getTime() - 1000 * 60 * 45).toISOString(),
-      end_time: new Date(now.getTime() + 1000 * 60 * 60 * 2).toISOString(),
+      start_time: createDate(18, 20),
+      end_time: createDate(18, 23),
       duration: "10800",
       site: "CodeChef",
-      status: "CODING"
+      status: "BEFORE"
     },
     {
-      name: "AtCoder Regular Contest 180",
-      url: "https://atcoder.jp/",
-      start_time: new Date(now.getTime() + 1000 * 60 * 60 * 18).toISOString(),
-      end_time: new Date(now.getTime() + 1000 * 60 * 60 * 20).toISOString(),
+      name: "TopCoder SRM 850",
+      url: "https://www.topcoder.com/challenges",
+      start_time: createDate(22, 19),
+      end_time: createDate(22, 21),
       duration: "7200",
+      site: "TopCoder",
+      status: "BEFORE"
+    },
+    {
+      name: "CSES Programming League",
+      url: "https://cses.fi/",
+      start_time: createDate(25, 10),
+      end_time: createDate(25, 13),
+      duration: "10800",
+      site: "CSES",
+      status: "BEFORE"
+    },
+    {
+      name: "BinarySearch Biohazard Contest",
+      url: "https://binarysearch.com/",
+      start_time: createDate(28, 21),
+      end_time: createDate(28, 23),
+      duration: "7200",
+      site: "BinarySearch",
+      status: "BEFORE"
+    },
+    {
+      name: "Hackerrank University CodeSprint",
+      url: "https://www.hackerrank.com/",
+      start_time: createDate(30, 15),
+      end_time: createDate(30, 18),
+      duration: "10800",
+      site: "HackerRank",
+      status: "BEFORE"
+    },
+    {
+      name: "Competitive Programming Node #1",
+      url: "#",
+      start_time: createDate(2, 20),
+      end_time: createDate(2, 22),
+      duration: "7200",
+      site: "Kattis",
+      status: "BEFORE"
+    },
+    {
+      name: "Global Marathon 2026",
+      url: "#",
+      start_time: createDate(10, 9),
+      end_time: createDate(10, 21),
+      duration: "43200",
+      site: "Hackerrank",
+      status: "BEFORE"
+    },
+    {
+      name: "Frontend Algorithms Cup",
+      url: "#",
+      start_time: createDate(20, 19),
+      end_time: createDate(20, 21),
+      duration: "7200",
+      site: "LeetCode",
+      status: "BEFORE"
+    },
+    {
+      name: "Backend Optimization Sprint",
+      url: "#",
+      start_time: createDate(24, 18),
+      end_time: createDate(24, 20),
+      duration: "7200",
+      site: "CodeForces",
+      status: "BEFORE"
+    },
+    {
+      name: "Night Owls Coding #12",
+      url: "#",
+      start_time: createDate(27, 23),
+      end_time: createDate(28, 2),
+      duration: "10800",
       site: "AtCoder",
       status: "BEFORE"
     }
@@ -64,13 +159,12 @@ export const contestService = {
     let rawData: any[] = [];
     let isFallback = false;
     
-    // Create an AbortController to handle request timeouts (408 prevention)
+    // Create an AbortController to handle request timeouts
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 4000); 
 
     try {
       const targetUrl = 'https://kontests.net/api/v1/all';
-      // Switching to corsproxy.io as it handles high-latency endpoints better
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
       
       const response = await fetch(proxyUrl, {
@@ -85,13 +179,6 @@ export const contestService = {
       rawData = await response.json();
     } catch (error: any) {
       clearTimeout(timeoutId);
-      const isTimeout = error.name === 'AbortError';
-      console.warn(
-        isTimeout 
-          ? "Contest API took too long to respond (408). Switching to local cache." 
-          : "External Contest API unreachable. Activating fallback data node.", 
-        error
-      );
       rawData = getFallbackContests();
       isFallback = true;
     }

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserRole, Grievance, GrievanceStatus } from '../types';
+import { UserRole, Grievance, GrievanceStatus, ComplaintHistoryItem } from '../types';
 import { geminiService } from '../services/geminiService';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
@@ -14,42 +14,131 @@ const itemVariants: Variants = {
   }
 };
 
+interface AccordionSectionProps {
+  title: string;
+  id: string;
+  isOpen: boolean;
+  onToggle: (id: string) => void;
+  children: React.ReactNode;
+  icon?: string;
+  badge?: string;
+  badgeColor?: string;
+}
+
+const AccordionSection: React.FC<AccordionSectionProps> = ({ title, id, isOpen, onToggle, children, icon, badge, badgeColor }) => (
+  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-4">
+    <button 
+      onClick={() => onToggle(id)}
+      className="w-full flex items-center justify-between p-6 text-left group transition-colors hover:bg-slate-50"
+    >
+      <div className="flex items-center gap-4">
+        {icon && <span className="text-xl">{icon}</span>}
+        <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+        {badge && (
+          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${badgeColor || 'bg-slate-100 text-slate-500'}`}>
+            {badge}
+          </span>
+        )}
+      </div>
+      <motion.span 
+        animate={{ rotate: isOpen ? 180 : 0 }}
+        className="text-blue-600 transition-colors"
+      >
+        ▼
+      </motion.span>
+    </button>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="border-t border-slate-100"
+        >
+          <div className="p-6">
+            {children}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+);
+
+type GrievanceCategory = 'Mess' | 'Staff' | 'Hostel' | 'Teacher' | 'Custom Inquiry';
+
+interface CategoryConfig {
+  icon: string;
+  subCategories: string[];
+}
+
+const CATEGORY_MAP: Record<GrievanceCategory, CategoryConfig> = {
+  'Mess': {
+    icon: '🍱',
+    subCategories: ['Food Quality', 'Hygiene Standards', 'Staff Behavior', 'Menu Non-compliance', 'Utensil Cleanliness']
+  },
+  'Staff': {
+    icon: '👥',
+    subCategories: ['Maintenance Delay', 'Security Misbehavior', 'Admin Office Delay', 'General Misconduct']
+  },
+  'Hostel': {
+    icon: '🏢',
+    subCategories: ['Water Supply Issue', 'Electricity/Power Cut', 'Internet Connectivity', 'Furniture Damage', 'Washroom Hygiene']
+  },
+  'Teacher': {
+    icon: '👨‍🏫',
+    subCategories: ['Course Coverage', 'Grading Grievance', 'Class Absence', 'Teaching Methodology', 'Availability for Doubts']
+  },
+  'Custom Inquiry': {
+    icon: '❓',
+    subCategories: ['Academic Query', 'Fee Structure', 'Document Request', 'Campus Event Info', 'Other']
+  }
+};
+
 export const GrievanceView: React.FC<{ role: UserRole }> = ({ role }) => {
-  const [grievances, setGrievances] = useState<Grievance[]>([
-    {
-      id: 'G-74291',
-      title: 'Lab AC malfunctioning',
-      description: 'The air conditioning in Lab 402 has been leaking and making loud noises for 3 days.',
-      category: 'Infrastructure',
-      status: GrievanceStatus.PENDING,
-      submittedBy: 'Alex Johnson',
-      submittedDate: '2023-10-24'
-    }
+  const [complaints, setComplaints] = useState<ComplaintHistoryItem[]>([
+    { id: 'C-001', category: 'Hostel - Water Supply Issue', description: 'No water in Block C since morning.', status: 'RESOLVED', date: '2024-02-10' }
   ]);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    studentName: '',
-    rollNumber: '',
-    department: 'CSE',
-    complaintType: 'Academic',
-    priority: 'Medium',
-    description: ''
+  
+  const [activeCategory, setActiveCategory] = useState<GrievanceCategory | null>(null);
+  const [formData, setFormData] = useState({ subCategory: '', description: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    'grievance-boxes': true,
+    'complaint-history': false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const toggleSection = (id: string) => {
+    setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleCategorySelect = (category: GrievanceCategory) => {
+    setActiveCategory(category);
+    setFormData({ subCategory: CATEGORY_MAP[category].subCategories[0], description: '' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const complaintId = `G-${Math.floor(10000 + Math.random() * 90000)}`;
-    const newG: Grievance = {
-      id: complaintId,
-      title: `${formData.complaintType} Issue`,
+    if (!activeCategory) return;
+
+    setIsSubmitting(true);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    const newC: ComplaintHistoryItem = {
+      id: `C-${Math.floor(100 + Math.random() * 900)}`,
+      category: `${activeCategory} - ${formData.subCategory}`,
       description: formData.description,
-      category: formData.complaintType,
-      status: GrievanceStatus.PENDING,
-      submittedBy: formData.studentName,
-      submittedDate: new Date().toISOString().split('T')[0]
+      status: 'PENDING',
+      date: new Date().toISOString().split('T')[0]
     };
-    setGrievances([newG, ...grievances]);
-    setShowForm(false);
+
+    setComplaints([newC, ...complaints]);
+    setFormData({ subCategory: '', description: '' });
+    setActiveCategory(null);
+    setIsSubmitting(false);
+    setOpenSections(prev => ({ ...prev, 'complaint-history': true }));
   };
 
   return (
@@ -57,140 +146,186 @@ export const GrievanceView: React.FC<{ role: UserRole }> = ({ role }) => {
       initial="hidden" 
       animate="visible" 
       variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
-      className="space-y-16"
+      className="space-y-12 pb-20 px-4 md:px-0"
     >
-      <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-black/5 pb-10">
-        <div className="space-y-2">
-          <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.4em]">Secure Portal</p>
-          <h2 className="text-4xl font-black text-[#1d1d1f] tracking-tight">Grievance Redressal</h2>
-          <p className="text-[#86868b] text-sm">Direct encrypted channel for campus concerns.</p>
-        </div>
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className="px-8 py-3 bg-[#1d1d1f] text-white rounded-full font-bold text-xs shadow-lg hover:bg-black transition-all"
-        >
-          {showForm ? 'Cancel Report' : 'Submit Grievance'}
-        </button>
+      <motion.div variants={itemVariants} className="space-y-2 border-b border-black/5 pb-10">
+        <p className="text-blue-600 text-[10px] font-black uppercase tracking-[0.4em]">Integrated Protocol</p>
+        <h2 className="text-4xl font-black text-[#1d1d1f] tracking-tight">Unified Redressal Center</h2>
+        <p className="text-[#86868b] text-sm font-medium">Categorized grievance submission for specialized administrative response.</p>
       </motion.div>
 
-      <AnimatePresence mode="wait">
-        {showForm ? (
-          <motion.div 
-            key="form"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="bento-card p-12 max-w-4xl mx-auto space-y-12 shadow-2xl border-none"
-          >
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Report Details</h3>
-              <p className="text-[#86868b] text-xs font-medium uppercase tracking-widest">Node Node: IITM-SEC-01</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Identity</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-[#f5f5f7] border border-black/5 rounded-xl px-5 py-4 text-[#1d1d1f] focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold placeholder:text-[#d2d2d7]"
-                    placeholder="Full Name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Node ID</label>
-                  <input 
-                    type="text" 
-                    className="w-full bg-[#f5f5f7] border border-black/5 rounded-xl px-5 py-4 text-[#1d1d1f] focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono font-bold placeholder:text-[#d2d2d7]"
-                    placeholder="B21001"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Detailed Disclosure</label>
-                <textarea 
-                  rows={6}
-                  className="w-full bg-[#f5f5f7] border border-black/5 rounded-2xl px-6 py-6 text-[#1d1d1f] focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium leading-relaxed placeholder:text-[#d2d2d7]"
-                  placeholder="Explain the anomaly..."
-                  required
-                />
-              </div>
-
-              <button className="w-full py-5 bg-blue-600 text-white rounded-xl font-black text-xs uppercase tracking-[0.3em] shadow-lg hover:bg-blue-500 transition-all">
-                Transmit Protocol
+      <motion.div variants={itemVariants}>
+        <AccordionSection 
+          title="File a New Grievance" 
+          id="grievance-boxes" 
+          isOpen={openSections['grievance-boxes']} 
+          onToggle={toggleSection}
+          icon="⚡"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            {(Object.keys(CATEGORY_MAP) as GrievanceCategory[]).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => handleCategorySelect(cat)}
+                className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all ${
+                  activeCategory === cat 
+                    ? 'bg-blue-600 border-blue-600 shadow-xl shadow-blue-200 text-white scale-105' 
+                    : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200 hover:bg-blue-50/50'
+                }`}
+              >
+                <span className="text-3xl mb-3">{CATEGORY_MAP[cat].icon}</span>
+                <span className={`text-[10px] font-black uppercase tracking-widest text-center ${activeCategory === cat ? 'text-white' : 'text-slate-600'}`}>
+                  {cat}
+                </span>
               </button>
-            </form>
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              <p className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] font-mono">HISTORY LOGS</p>
-              {grievances.map(g => (
-                <motion.div 
-                  key={g.id} 
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.01 }}
-                  className="bento-card p-10 group"
-                >
-                  <div className="flex justify-between items-start mb-8">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-black font-mono text-blue-600 uppercase tracking-widest">{g.id}</span>
-                      <h4 className="text-xl font-bold text-[#1d1d1f] tracking-tight">{g.title}</h4>
+            ))}
+          </div>
+
+          <AnimatePresence mode="wait">
+            {activeCategory && (
+              <motion.div
+                key={activeCategory}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-slate-50/50 border border-slate-100 rounded-3xl p-8"
+              >
+                <div className="flex items-center gap-3 mb-8">
+                  <span className="text-2xl">{CATEGORY_MAP[activeCategory].icon}</span>
+                  <h4 className="text-xl font-black text-slate-800 tracking-tight">
+                    {activeCategory} Grievance Details
+                  </h4>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Issue Specifics</label>
+                      <select 
+                        required
+                        className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer shadow-sm"
+                        value={formData.subCategory}
+                        onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                      >
+                        {CATEGORY_MAP[activeCategory].subCategories.map(sub => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                      </select>
                     </div>
-                    <span className="px-3 py-1 bg-[#f5f5f7] text-[#1d1d1f] border border-black/5 rounded-full text-[9px] font-black uppercase tracking-widest">
-                      {g.status}
-                    </span>
                   </div>
-                  <p className="text-[#6e6e73] text-sm leading-relaxed italic line-clamp-2">{g.description}</p>
-                  
-                  <div className="mt-8 pt-8 border-t border-black/5 flex justify-between items-center">
-                    <div className="flex gap-8">
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">SUBMITTED</p>
-                        <p className="text-[11px] font-bold text-[#1d1d1f]">{g.submittedBy}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">TIMESTAMP</p>
-                        <p className="text-[11px] font-bold text-[#1d1d1f]">{g.submittedDate}</p>
-                      </div>
-                    </div>
-                    <button className="text-blue-600 text-[10px] font-black uppercase tracking-widest hover:underline">Inspect</button>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Issue Description</label>
+                    <textarea 
+                      required
+                      rows={5}
+                      className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all leading-relaxed shadow-sm"
+                      placeholder={`Please describe the ${activeCategory.toLowerCase()} issue in detail...`}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
                   </div>
-                </motion.div>
-              ))}
+
+                  <div className="flex gap-4 pt-4">
+                    <button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className="flex-1 bg-blue-600 text-white py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isSubmitting ? 'Transmitting...' : 'Submit to Academic Council ❯'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setActiveCategory(null)}
+                      className="px-8 bg-white border border-slate-200 text-slate-400 py-5 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-[0.98]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {!activeCategory && (
+            <div className="text-center py-16 border-2 border-dashed border-slate-100 rounded-[40px] bg-slate-50/30">
+              <span className="text-4xl block mb-4 opacity-20">📂</span>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Select a Category Above to Initialize Request</p>
             </div>
+          )}
+        </AccordionSection>
 
-            <div className="space-y-8">
-              <motion.div variants={itemVariants} className="bento-card p-10 bg-[#f5f5f7]/50 space-y-6">
-                <h4 className="text-sm font-black text-[#1d1d1f] uppercase tracking-tight">Track Report</h4>
-                <div className="space-y-3">
-                  <input 
-                    type="text" 
-                    placeholder="G-XXXXX" 
-                    className="w-full bg-white border border-black/5 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                  <button className="w-full bg-[#1d1d1f] text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Verify</button>
+        <AccordionSection 
+          title="Grievance Status Tracker" 
+          id="complaint-history" 
+          isOpen={openSections['complaint-history']} 
+          onToggle={toggleSection}
+          icon="📊"
+          badge={`${complaints.length} Records`}
+        >
+          <div className="space-y-4">
+            {complaints.length > 0 ? complaints.map(c => (
+              <div key={c.id} className="p-6 rounded-3xl border border-slate-100 bg-white flex flex-col md:flex-row justify-between md:items-center gap-6 group hover:border-blue-300 transition-all shadow-sm">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono text-blue-600 font-black bg-blue-50 px-3 py-1 rounded-full">{c.id}</span>
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-tight">{c.category}</span>
+                  </div>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-2xl">{c.description}</p>
                 </div>
-              </motion.div>
+                <div className="flex flex-col items-end gap-2">
+                  <span className={`text-[9px] font-black uppercase px-4 py-1.5 rounded-full border ${
+                    c.status === 'RESOLVED' 
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
+                      : 'bg-amber-50 text-amber-600 border-amber-100 animate-pulse'
+                  }`}>
+                    {c.status}
+                  </span>
+                  <p className="text-[10px] text-slate-400 font-mono font-bold tracking-tighter opacity-60">Submitted: {c.date}</p>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-20">
+                <span className="text-5xl block mb-4 opacity-10">📭</span>
+                <p className="text-[10px] text-slate-300 font-black uppercase tracking-[0.5em]">System Archives Empty</p>
+              </div>
+            )}
+          </div>
+        </AccordionSection>
+      </motion.div>
 
-              <motion.div variants={itemVariants} className="bento-card p-10 space-y-6">
-                <h4 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">DIRECTIVES</h4>
-                <div className="space-y-6">
-                  {['Academic Cell', 'Hostel Office', 'Dean SW'].map(cell => (
-                    <div key={cell} className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-[#1d1d1f]">{cell}</span>
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_6px_rgba(34,197,94,0.3)]" />
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+      {/* Analytics Card */}
+      <motion.div variants={itemVariants} className="bg-slate-900 rounded-[40px] p-12 text-white relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-600/10 to-transparent pointer-events-none" />
+        <div className="relative z-10 space-y-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em]">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            Real-time Resolution Metrics
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="space-y-1">
+              <p className="text-3xl font-black font-mono">24h</p>
+              <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Avg. Response Time</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-black font-mono">98%</p>
+              <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Resolution Rate</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-black font-mono">14</p>
+              <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Active Adjudicators</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-3xl font-black font-mono">1.2k</p>
+              <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Records Processed</p>
             </div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </motion.div>
     </motion.div>
   );
 };
